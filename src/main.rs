@@ -8,18 +8,47 @@ fn main() {
 
     let args: Vec<_> = std::env::args().collect();
 
-    let offset: i32 = args[1].parse().unwrap();
+    let mut offset_list: Vec<i32> = Vec::new();
+    let mut epoch_list: Vec<i64> = Vec::new();
 
-    for i in 2..args.len() {
-        let epoch: i64 = args[i].parse().unwrap();
-        print_date(epoch, offset);
+    for i in 1..args.len() {
+        let arg = &args[i];
+        if arg.starts_with("+") || arg.starts_with("-") {
+            offset_list.push(arg[1..].parse().unwrap());
+        } else {
+            let epoch: i64 = args[i].parse().unwrap();
+            epoch_list.push(epoch);
+        }
+    }
+
+    if offset_list.is_empty() {
+        offset_list.push(0);
+    }
+
+    for epoch in epoch_list {
+        let date_strings = offset_list
+            .iter()
+            .map(|o| to_date_str(epoch, *o))
+            .collect::<Vec<_>>();
+        print_date_strings(epoch, date_strings);
     }
 }
 
-fn print_date(epoch_sec: i64, offset: i32) {
+fn to_date_str(epoch_sec: i64, offset: i32) -> String {
     let dt = Utc
         .timestamp(epoch_sec, 0)
         .with_timezone(&FixedOffset::east(offset * 3600));
 
-    println!("{}", dt.format("%Y-%m-%dT%H:%M:%S%z").to_string());
+    return dt.format("%Y-%m-%dT%H:%M:%S%z").to_string();
+}
+
+fn print_date_strings(epoch: i64, date_strings: Vec<String>) {
+    print!("{:10} ", epoch);
+    for (i, d) in date_strings.iter().enumerate() {
+        if i > 0 {
+            print!(" ");
+        }
+        print!("{}", d);
+    }
+    println!();
 }
