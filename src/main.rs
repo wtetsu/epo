@@ -2,11 +2,6 @@ mod date;
 mod util;
 
 fn main() {
-    if std::env::args().len() <= 1 {
-        eprintln!("Usage: epo utc_offset epoch1 epoch2 ...");
-        return;
-    }
-
     let args = parse_arguments(std::env::args().collect());
 
     if args.epochs.len() >= 1 {
@@ -25,6 +20,10 @@ struct Arguments {
 }
 
 fn parse_arguments(args: Vec<String>) -> Arguments {
+    if args.len() <= 1 {
+        return make_default_arguments();
+    }
+
     let mut offsets: Vec<i32> = Vec::new();
     let mut epochs: Vec<i64> = Vec::new();
     let mut dates: Vec<date::DateValue> = Vec::new();
@@ -51,6 +50,16 @@ fn parse_arguments(args: Vec<String>) -> Arguments {
     }
 
     return Arguments { offsets, epochs, dates };
+}
+
+fn make_default_arguments() -> Arguments {
+    let now = date::now();
+
+    return Arguments {
+        offsets: vec![now.offset_sec / 3600, 0],
+        epochs: vec![now.epoch_sec],
+        dates: vec![],
+    };
 }
 
 fn print_epochs(epochs: Vec<i64>, offsets: Vec<i32>) {

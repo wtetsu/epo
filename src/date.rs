@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, TimeZone, Utc};
+use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
 
 pub struct DateValue {
   pub epoch_sec: i64,
@@ -63,6 +63,22 @@ pub fn parse_date_str(date_str: &str) -> Result<DateValue, String> {
   }
 
   return Err("Parse error".to_string());
+}
+
+pub fn now() -> DateValue {
+  return to_date_value(Local::now());
+}
+
+fn to_date_value(time: DateTime<Local>) -> DateValue {
+  let epoch_sec = time.timestamp();
+  let offset_sec = time.date().offset().local_minus_utc();
+  let date_str = to_date_str(epoch_sec, offset_sec / 3600);
+
+  return DateValue {
+    epoch_sec,
+    offset_sec,
+    date_str,
+  };
 }
 
 #[cfg(test)]
