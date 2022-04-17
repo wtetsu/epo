@@ -6,10 +6,10 @@ pub struct DateValue {
   pub date_str: String,
 }
 
-pub fn to_date_str(epoch_sec: i64, offset: i32) -> String {
+pub fn to_date_str(epoch_sec: i64, offset_sec: i32) -> String {
   let dt = Utc
     .timestamp(epoch_sec, 0)
-    .with_timezone(&FixedOffset::east(offset * 3600));
+    .with_timezone(&FixedOffset::east(offset_sec));
 
   return dt.format("%Y-%m-%dT%H:%M:%S%z").to_string();
 }
@@ -87,8 +87,10 @@ mod tests {
   #[test]
   fn test_to_date_str() {
     assert_eq!("1970-01-01T00:00:00+0000", to_date_str(0, 0));
-    assert_eq!("1970-01-01T09:00:00+0900", to_date_str(0, 9));
-    assert_eq!("2022-04-17T21:09:49+0900", to_date_str(1650197389, 9));
+    assert_eq!("1970-01-01T09:00:00+0900", to_date_str(0, 32400));
+    assert_eq!("2022-04-17T21:09:49+0900", to_date_str(1650197389, 32400));
+    assert_eq!("2022-04-17T12:09:49+0000", to_date_str(1650197389, 0));
+    assert_eq!("2022-04-17T07:09:49-0500", to_date_str(1650197389, -18000));
   }
 
   #[test]
