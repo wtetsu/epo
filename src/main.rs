@@ -1,4 +1,5 @@
 mod date;
+mod util;
 
 fn main() {
     if std::env::args().len() <= 1 {
@@ -6,30 +7,61 @@ fn main() {
         return;
     }
 
-    let args: Vec<_> = std::env::args().collect();
+    let args = parse_arguments(std::env::args().collect());
 
-    let mut offset_list: Vec<i32> = Vec::new();
-    let mut epoch_list: Vec<i64> = Vec::new();
+    if args.epochs.len() >= 1 {
+        print_dates(args.epochs, args.offsets)
+    }
+
+    if args.dates.len() >= 1 {
+        p(args.dates);
+    }
+}
+
+fn p(dates: Vec<date::DateValue>) {
+    for date in dates {
+        println!("{:24} {:10}", date.date_str, date.epoch_sec);
+    }
+}
+
+struct Arguments {
+    offsets: Vec<i32>,
+    epochs: Vec<i64>,
+    dates: Vec<date::DateValue>,
+}
+
+fn parse_arguments(args: Vec<String>) -> Arguments {
+    let mut offsets: Vec<i32> = Vec::new();
+    let mut epochs: Vec<i64> = Vec::new();
+    let mut dates: Vec<date::DateValue> = Vec::new();
 
     for i in 1..args.len() {
         let arg = &args[i];
         if arg.starts_with("+") || arg.starts_with("-") {
-            offset_list.push(arg[1..].parse().unwrap());
+            offsets.push(arg[1..].parse().unwrap());
+        } else if util::is_numeric(arg) {
+            let epoch: i64 = arg.parse().unwrap();
+            epochs.push(epoch);
         } else {
-            let epoch: i64 = args[i].parse().unwrap();
-            epoch_list.push(epoch);
+            let r = date::parse_date_str(arg);
+            if r.is_ok() {
+                dates.push(r.unwrap());
+            } else {
+                eprintln!("Invalid date: {}", arg);
+            }
         }
     }
 
-    if offset_list.is_empty() {
-        offset_list.push(0);
+    if offsets.is_empty() {
+        offsets.push(0);
     }
 
-    for epoch in epoch_list {
-        let date_strings = offset_list
-            .iter()
-            .map(|o| date::to_date_str(epoch, *o))
-            .collect::<Vec<_>>();
+    return Arguments { offsets, epochs, dates };
+}
+
+fn print_dates(epochs: Vec<i64>, offsets: Vec<i32>) {
+    for epoch in epochs {
+        let date_strings = offsets.iter().map(|o| date::to_date_str(epoch, *o)).collect::<Vec<_>>();
         print_date_strings(epoch, date_strings);
     }
 }
