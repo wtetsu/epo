@@ -1,5 +1,5 @@
 pub fn is_numeric(str: &str) -> bool {
-    if str.len() == 0 {
+    if str.is_empty() {
         return false;
     }
     str.chars().all(|c| c.is_digit(10))

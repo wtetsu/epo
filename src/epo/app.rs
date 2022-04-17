@@ -8,11 +8,9 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
     if args.len() <= 1 {
         return make_default_arguments();
     }
-
     let mut offset_secs: Vec<i32> = Vec::new();
     let mut epoch_secs: Vec<i64> = Vec::new();
     let mut dates: Vec<super::date::DateInfo> = Vec::new();
-
     for i in 1..args.len() {
         let arg = &args[i];
         if arg.starts_with("+") || arg.starts_with("-") {
@@ -30,11 +28,9 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
             }
         }
     }
-
     if offset_secs.is_empty() {
-        offset_secs.push(0);
+        offset_secs.push(super::date::now().offset_sec);
     }
-
     return Settings {
         offset_secs,
         epoch_secs,
@@ -44,20 +40,18 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
 
 pub fn make_default_arguments() -> Settings {
     let now = super::date::now();
-
     return Settings {
-        offset_secs: vec![now.offset_sec, 0],
+        offset_secs: vec![now.offset_sec],
         epoch_secs: vec![now.epoch_sec],
         dates: vec![],
     };
 }
 
 pub fn print_all(settings: Settings) {
-    if settings.epoch_secs.len() >= 1 {
+    if !settings.epoch_secs.is_empty() {
         print_epochs(settings.epoch_secs, settings.offset_secs)
     }
-
-    if settings.dates.len() >= 1 {
+    if !settings.dates.is_empty() {
         print_dates(settings.dates);
     }
 }
