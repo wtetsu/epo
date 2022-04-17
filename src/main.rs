@@ -10,17 +10,11 @@ fn main() {
     let args = parse_arguments(std::env::args().collect());
 
     if args.epochs.len() >= 1 {
-        print_dates(args.epochs, args.offsets)
+        print_epochs(args.epochs, args.offsets)
     }
 
     if args.dates.len() >= 1 {
-        p(args.dates);
-    }
-}
-
-fn p(dates: Vec<date::DateValue>) {
-    for date in dates {
-        println!("{:24} {:10}", date.date_str, date.epoch_sec);
+        print_dates(args.dates);
     }
 }
 
@@ -59,7 +53,7 @@ fn parse_arguments(args: Vec<String>) -> Arguments {
     return Arguments { offsets, epochs, dates };
 }
 
-fn print_dates(epochs: Vec<i64>, offsets: Vec<i32>) {
+fn print_epochs(epochs: Vec<i64>, offsets: Vec<i32>) {
     for epoch in epochs {
         let date_strings = offsets.iter().map(|o| date::to_date_str(epoch, *o)).collect::<Vec<_>>();
         print_date_strings(epoch, date_strings);
@@ -75,4 +69,10 @@ fn print_date_strings(epoch: i64, date_strings: Vec<String>) {
         print!("{}", d);
     }
     println!();
+}
+
+fn print_dates(dates: Vec<date::DateValue>) {
+    for date in dates {
+        println!("{:24} {:10}", date.date_str, date.epoch_sec);
+    }
 }
