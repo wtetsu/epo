@@ -1,4 +1,4 @@
-use chrono::{FixedOffset, TimeZone, Utc};
+mod date;
 
 fn main() {
     if std::env::args().len() <= 1 {
@@ -28,18 +28,10 @@ fn main() {
     for epoch in epoch_list {
         let date_strings = offset_list
             .iter()
-            .map(|o| to_date_str(epoch, *o))
+            .map(|o| date::to_date_str(epoch, *o))
             .collect::<Vec<_>>();
         print_date_strings(epoch, date_strings);
     }
-}
-
-fn to_date_str(epoch_sec: i64, offset: i32) -> String {
-    let dt = Utc
-        .timestamp(epoch_sec, 0)
-        .with_timezone(&FixedOffset::east(offset * 3600));
-
-    return dt.format("%Y-%m-%dT%H:%M:%S%z").to_string();
 }
 
 fn print_date_strings(epoch: i64, date_strings: Vec<String>) {
