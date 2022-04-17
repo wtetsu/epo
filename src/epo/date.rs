@@ -104,6 +104,12 @@ mod tests {
         assert_date(0, 0, parse_date_str("1970/01/01 00:00:00").unwrap());
     }
 
+    #[test]
+    fn test_to_date_value() {
+        let dt: Result<DateTime<Local>, _> = Local.datetime_from_str("2023/12/07 22:45:56", "%Y/%m/%d %H:%M:%S");
+        assert_eq!(true, to_date_value(dt.unwrap()).date_str.ends_with("+0000"));
+    }
+
     fn assert_date(epoch_sec: i64, offset: i32, date_value: DateInfo) {
         assert_eq!(epoch_sec, date_value.epoch_sec);
         assert_eq!(offset, date_value.offset_sec);
