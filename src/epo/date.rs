@@ -1,6 +1,6 @@
 use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
 
-pub struct DateValue {
+pub struct DateInfo {
   pub epoch_sec: i64,
   pub offset_sec: i32,
   pub date_str: String,
@@ -14,7 +14,7 @@ pub fn to_date_str(epoch_sec: i64, offset_sec: i32) -> String {
   return dt.format("%Y-%m-%dT%H:%M:%S%z").to_string();
 }
 
-pub fn parse_date_str(date_str: &str) -> Result<DateValue, String> {
+pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
   let formats = vec![
     "%Y-%m-%dT%H:%M:%S%z",
     "%Y/%m/%dT%H:%M:%S%z",
@@ -32,7 +32,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateValue, String> {
     let r = DateTime::parse_from_str(date_str, format);
     if r.is_ok() {
       let dt = r.unwrap();
-      return Ok(DateValue {
+      return Ok(DateInfo {
         epoch_sec: dt.timestamp(),
         offset_sec: dt.offset().local_minus_utc(),
         date_str: date_str.to_string(),
@@ -44,7 +44,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateValue, String> {
     let r = Utc.datetime_from_str(date_str, format);
     if r.is_ok() {
       let dt = r.unwrap();
-      return Ok(DateValue {
+      return Ok(DateInfo {
         epoch_sec: dt.timestamp(),
         offset_sec: 0,
         date_str: date_str.to_string(),
@@ -55,7 +55,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateValue, String> {
   let r = DateTime::parse_from_rfc2822(date_str);
   if r.is_ok() {
     let dt = r.unwrap();
-    return Ok(DateValue {
+    return Ok(DateInfo {
       epoch_sec: dt.timestamp(),
       offset_sec: 0,
       date_str: date_str.to_string(),
@@ -65,16 +65,16 @@ pub fn parse_date_str(date_str: &str) -> Result<DateValue, String> {
   return Err("Parse error".to_string());
 }
 
-pub fn now() -> DateValue {
+pub fn now() -> DateInfo {
   return to_date_value(Local::now());
 }
 
-fn to_date_value(time: DateTime<Local>) -> DateValue {
+fn to_date_value(time: DateTime<Local>) -> DateInfo {
   let epoch_sec = time.timestamp();
   let offset_sec = time.date().offset().local_minus_utc();
   let date_str = to_date_str(epoch_sec, offset_sec / 3600);
 
-  return DateValue {
+  return DateInfo {
     epoch_sec,
     offset_sec,
     date_str,
@@ -104,7 +104,7 @@ mod tests {
     assert_date(0, 0, parse_date_str("1970/01/01 00:00:00").unwrap());
   }
 
-  fn assert_date(epoch_sec: i64, offset: i32, date_value: DateValue) {
+  fn assert_date(epoch_sec: i64, offset: i32, date_value: DateInfo) {
     assert_eq!(epoch_sec, date_value.epoch_sec);
     assert_eq!(offset, date_value.offset_sec);
   }
