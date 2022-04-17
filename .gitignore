@@ -11,3 +11,4 @@ Cargo.lock
 
 *.out
 *.pdb
+*.exe
