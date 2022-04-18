@@ -11,7 +11,6 @@ mod tests {
 
     #[test]
     fn test_is_numeric() {
-        assert!(!is_numeric(""));
         assert!(is_numeric("0"));
         assert!(is_numeric("1"));
         assert!(is_numeric("9"));
@@ -23,5 +22,8 @@ mod tests {
         assert!(!is_numeric("123a"));
         assert!(!is_numeric("a123"));
         assert!(!is_numeric("a123b"));
+        assert!(!is_numeric(""));
+        assert!(!is_numeric("+"));
+        assert!(!is_numeric("-"));
     }
 }

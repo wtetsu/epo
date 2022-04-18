@@ -75,6 +75,47 @@ fn to_date_value(time: DateTime<Local>) -> DateInfo {
     }
 }
 
+pub fn parse_offset_str(offset_str: &str) -> Result<i32, String> {
+    if offset_str.len() == 5 {
+        return parse_5letters_offset_str(offset_str);
+    }
+
+    parse_hours_offset_str(offset_str)
+}
+
+fn parse_5letters_offset_str(offset_str: &str) -> Result<i32, String> {
+    if !(offset_str.starts_with('+') || offset_str.starts_with('-')) {
+        return Err("Invalid offset".to_string());
+    }
+    let sign = if offset_str.starts_with('+') { 1 } else { -1 };
+
+    if let Ok(h) = offset_str[1..3].parse::<i32>() {
+        if let Ok(m) = offset_str[3..5].parse::<i32>() {
+            let offset_sec = h * 3600 + m * 60;
+            if offset_sec < 24 * 3600 {
+                return Ok(offset_sec * sign);
+            }
+        }
+    }
+    Err("Invalid offset".to_string())
+}
+
+fn parse_hours_offset_str(offset_str: &str) -> Result<i32, String> {
+    if !(offset_str.starts_with('+') || offset_str.starts_with('-')) {
+        return Err("Invalid offset".to_string());
+    }
+
+    let sign = if offset_str.starts_with('+') { 1 } else { -1 };
+
+    if let Ok(offset_hour) = offset_str[1..].parse::<i32>() {
+        if offset_hour < 24 {
+            return Ok(offset_hour * 3600 * sign);
+        }
+    }
+
+    Err("Invalid offset".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -107,5 +148,50 @@ mod tests {
     fn assert_date(epoch_sec: i64, offset: i32, date_value: DateInfo) {
         assert_eq!(epoch_sec, date_value.epoch_sec);
         assert_eq!(offset, date_value.offset_sec);
+    }
+
+    #[test]
+    fn test_parse_5letters_offset_str() {
+        assert_eq!(0, parse_offset_str("+0000").unwrap());
+        assert_eq!(0, parse_offset_str("-0000").unwrap());
+        assert_eq!(1800, parse_offset_str("+0030").unwrap());
+        assert_eq!(-1800, parse_offset_str("-0030").unwrap());
+        assert_eq!(3600 * 5, parse_offset_str("+0500").unwrap());
+        assert_eq!(-(3600 * 5), parse_offset_str("-0500").unwrap());
+        assert_eq!(3600 * 9, parse_offset_str("+0900").unwrap());
+        assert_eq!(-(3600 * 9), parse_offset_str("-0900").unwrap());
+        assert_eq!(3600 * 12 + 1800, parse_offset_str("+1230").unwrap());
+        assert_eq!(-(3600 * 12 + 1800), parse_offset_str("-1230").unwrap());
+        assert_eq!(3600 * 23, parse_offset_str("+2300").unwrap());
+        assert_eq!(-(3600 * 23), parse_offset_str("-2300").unwrap());
+        assert_eq!(3600 * 23 + 3540, parse_offset_str("+2359").unwrap());
+        assert_eq!(-(3600 * 23 + 3540), parse_offset_str("-2359").unwrap());
+        assert!(parse_offset_str("+2400").is_err());
+        assert!(parse_offset_str("-2400").is_err());
+        assert!(parse_offset_str("+00xx").is_err());
+        assert!(parse_offset_str("-00xx").is_err());
+        assert!(parse_offset_str("+xx00").is_err());
+        assert!(parse_offset_str("-xx00").is_err());
+    }
+
+    #[test]
+    fn test_parse_hours_offset_str() {
+        assert_eq!(0, parse_hours_offset_str("+0").unwrap());
+        assert_eq!(0, parse_hours_offset_str("-0").unwrap());
+        assert_eq!(3600, parse_hours_offset_str("+1").unwrap());
+        assert_eq!(-(3600), parse_hours_offset_str("-1").unwrap());
+        assert_eq!(3600 * 9, parse_hours_offset_str("+9").unwrap());
+        assert_eq!(-(3600 * 9), parse_hours_offset_str("-9").unwrap());
+        assert_eq!(3600 * 15, parse_hours_offset_str("+15").unwrap());
+        assert_eq!(-(3600 * 15), parse_hours_offset_str("-15").unwrap());
+        assert_eq!(3600 * 23, parse_hours_offset_str("+23").unwrap());
+        assert_eq!(-(3600 * 23), parse_hours_offset_str("-23").unwrap());
+        assert!(parse_hours_offset_str("+24").is_err());
+        assert!(parse_hours_offset_str("-24").is_err());
+        assert!(parse_hours_offset_str("").is_err());
+        assert!(parse_hours_offset_str("+").is_err());
+        assert!(parse_hours_offset_str("-").is_err());
+        assert!(parse_hours_offset_str("++").is_err());
+        assert!(parse_hours_offset_str("--").is_err());
     }
 }

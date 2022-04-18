@@ -13,8 +13,9 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
     let mut dates: Vec<super::date::DateInfo> = Vec::new();
     for arg in args.iter().skip(1) {
         if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
-            let offset_hour: i32 = arg[1..].parse().unwrap();
-            offset_secs.push(offset_hour * 3600);
+            if let Ok(offset_sec) = super::date::parse_offset_str(arg) {
+                offset_secs.push(offset_sec);
+            }
         } else if super::util::is_numeric(arg) {
             let epoch_sec: i64 = arg.parse().unwrap();
             epoch_secs.push(epoch_sec);
