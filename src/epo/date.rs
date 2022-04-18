@@ -29,9 +29,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
     ];
 
     for format in formats {
-        let r = DateTime::parse_from_str(date_str, format);
-        if r.is_ok() {
-            let dt = r.unwrap();
+        if let Ok(dt) = DateTime::parse_from_str(date_str, format) {
             return Ok(DateInfo {
                 epoch_sec: dt.timestamp(),
                 offset_sec: dt.offset().local_minus_utc(),
@@ -41,9 +39,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
     }
 
     for format in formats_without_offset {
-        let r = Utc.datetime_from_str(date_str, format);
-        if r.is_ok() {
-            let dt = r.unwrap();
+        if let Ok(dt) = Utc.datetime_from_str(date_str, format) {
             return Ok(DateInfo {
                 epoch_sec: dt.timestamp(),
                 offset_sec: 0,
@@ -52,9 +48,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
         }
     }
 
-    let r = DateTime::parse_from_rfc2822(date_str);
-    if r.is_ok() {
-        let dt = r.unwrap();
+    if let Ok(dt) = DateTime::parse_from_rfc2822(date_str) {
         return Ok(DateInfo {
             epoch_sec: dt.timestamp(),
             offset_sec: 0,
@@ -62,11 +56,11 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
         });
     }
 
-    return Err("Parse error".to_string());
+    Err("Parse error".to_string())
 }
 
 pub fn now() -> DateInfo {
-    return to_date_value(Local::now());
+    to_date_value(Local::now())
 }
 
 fn to_date_value(time: DateTime<Local>) -> DateInfo {
@@ -74,11 +68,11 @@ fn to_date_value(time: DateTime<Local>) -> DateInfo {
     let offset_sec = time.date().offset().local_minus_utc();
     let date_str = to_date_str(epoch_sec, offset_sec / 3600);
 
-    return DateInfo {
+    DateInfo {
         epoch_sec,
         offset_sec,
         date_str,
-    };
+    }
 }
 
 #[cfg(test)]
@@ -107,7 +101,7 @@ mod tests {
     #[test]
     fn test_to_date_value() {
         let dt: Result<DateTime<Local>, _> = Local.datetime_from_str("2023/12/07 22:45:56", "%Y/%m/%d %H:%M:%S");
-        assert_eq!(true, to_date_value(dt.unwrap()).date_str.ends_with("+0000"));
+        assert!(to_date_value(dt.unwrap()).date_str.ends_with("+0000"));
     }
 
     fn assert_date(epoch_sec: i64, offset: i32, date_value: DateInfo) {

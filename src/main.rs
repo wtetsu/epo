@@ -2,5 +2,5 @@ mod epo;
 
 fn main() {
     let args = epo::app::parse_arguments(std::env::args().collect());
-    epo::app::print_all(args);
+    epo::app::run(args);
 }

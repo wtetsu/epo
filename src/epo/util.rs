@@ -11,17 +11,17 @@ mod tests {
 
     #[test]
     fn test_is_numeric() {
-        assert_eq!(false, is_numeric(""));
-        assert_eq!(true, is_numeric("0"));
-        assert_eq!(true, is_numeric("1"));
-        assert_eq!(true, is_numeric("9"));
-        assert_eq!(false, is_numeric("A"));
-        assert_eq!(true, is_numeric("123"));
-        assert_eq!(true, is_numeric("12345678901234567890"));
-        assert_eq!(false, is_numeric("-123"));
-        assert_eq!(false, is_numeric("+123"));
-        assert_eq!(false, is_numeric("123a"));
-        assert_eq!(false, is_numeric("a123"));
-        assert_eq!(false, is_numeric("a123b"));
+        assert!(!is_numeric(""));
+        assert!(is_numeric("0"));
+        assert!(is_numeric("1"));
+        assert!(is_numeric("9"));
+        assert!(!is_numeric("A"));
+        assert!(is_numeric("123"));
+        assert!(is_numeric("12345678901234567890"));
+        assert!(!is_numeric("-123"));
+        assert!(!is_numeric("+123"));
+        assert!(!is_numeric("123a"));
+        assert!(!is_numeric("a123"));
+        assert!(!is_numeric("a123b"));
     }
 }
