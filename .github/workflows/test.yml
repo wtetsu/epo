@@ -11,11 +11,13 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - uses: actions-rs/cargo@v1
+      - name: cargo clippy
+        uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- -A clippy::needless_return
-      - uses: actions-rs/cargo@v1
+      - name: cargo test
+        uses: actions-rs/cargo@v1
         with:
           command: test
           args: --release --all-features
