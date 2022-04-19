@@ -36,6 +36,10 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
         all_offset_secs.push(super::date::now().offset_sec);
     }
     let offset_secs = unique(all_offset_secs);
+
+    if dates.is_empty() {
+        dates.push(super::date::now());
+    }
     Settings { offset_secs, dates }
 }
 
@@ -61,8 +65,72 @@ pub fn make_default_settings() -> Settings {
 
 pub fn run(settings: Settings) {
     if !settings.dates.is_empty() {
-        print_dates(settings.dates, settings.offset_secs)
+        // print_dates(settings.dates, settings.offset_secs);
+        let data = to_string_rows(settings.dates, settings.offset_secs);
+        print_markdown_table(&data);
     }
+}
+
+fn print_markdown_table(data: &Vec<Vec<String>>) {
+    let max_lengths = calc_max_column_length(data);
+
+    for (i, row) in data.iter().enumerate() {
+        let line: Vec<String> = Vec::new();
+        for (i, cell) in row.iter().enumerate() {
+            let width = max_lengths[i];
+            print!("| {:>width$} ", cell);
+        }
+        print!("|");
+        println!();
+
+        if i == 0 {
+            println!("{}", generate_header_line(&max_lengths));
+        }
+    }
+}
+
+fn generate_header_line(max_lengths: &Vec<usize>) -> String {
+    let mut header_line = "".to_string();
+    for max_length in max_lengths.iter() {
+        header_line.push_str("| ");
+        header_line.push_str("-".repeat(*max_length).as_str());
+        header_line.push_str(" ");
+    }
+    header_line.push_str("|");
+    header_line
+}
+
+fn calc_max_column_length(data: &Vec<Vec<String>>) -> Vec<usize> {
+    let mut max_len: Vec<usize> = vec![0; data[0].len()];
+
+    for row in data {
+        for (i, col) in row.iter().enumerate() {
+            if max_len[i] < col.len() {
+                max_len[i] = col.len();
+            }
+        }
+    }
+
+    max_len
+}
+
+fn to_string_rows(dates: Vec<super::date::DateInfo>, offset_secs: Vec<i32>) -> Vec<Vec<String>> {
+    let mut headers: Vec<String> = vec!["Epoch".to_string()];
+    for offset_sec in &offset_secs {
+        headers.push(super::date::to_offset_str(*offset_sec));
+    }
+
+    let mut rows: Vec<Vec<String>> = vec![headers];
+
+    for date in &dates {
+        let mut row: Vec<String> = vec![date.epoch_sec.to_string()];
+        for offset_sec in &offset_secs {
+            let dt = super::date::to_date_str(date.epoch_sec, *offset_sec);
+            row.push(dt);
+        }
+        rows.push(row);
+    }
+    rows
 }
 
 fn print_dates(dates: Vec<super::date::DateInfo>, offset_secs: Vec<i32>) {

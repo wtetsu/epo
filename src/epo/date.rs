@@ -87,6 +87,15 @@ pub fn parse_offset_str(offset_str: &str) -> Result<i32, String> {
     parse_hours_offset_str(offset_str)
 }
 
+pub fn to_offset_str(offset_sec: i32) -> String {
+    let sign = if offset_sec >= 0 { "+" } else { "-" };
+
+    let hour = (offset_sec / 3600).abs();
+    let min = (offset_sec % 3600).abs() / 60;
+
+    format!("{}{:02}{:02}", sign, hour, min)
+}
+
 fn parse_5letters_offset_str(offset_str: &str) -> Result<i32, String> {
     if !(offset_str.starts_with('+') || offset_str.starts_with('-')) {
         return Err("Invalid offset".to_string());
@@ -197,5 +206,22 @@ mod tests {
         assert!(parse_hours_offset_str("-").is_err());
         assert!(parse_hours_offset_str("++").is_err());
         assert!(parse_hours_offset_str("--").is_err());
+    }
+
+    #[test]
+    fn test_to_offset_str() {
+        assert_eq!("+0000", to_offset_str(0));
+        assert_eq!("+0030", to_offset_str(1800));
+        assert_eq!("-0030", to_offset_str(-1800));
+        assert_eq!("+0500", to_offset_str(3600 * 5));
+        assert_eq!("-0500", to_offset_str(-3600 * 5));
+        assert_eq!("+0900", to_offset_str(3600 * 9));
+        assert_eq!("-0900", to_offset_str(-3600 * 9));
+        assert_eq!("+1230", to_offset_str(3600 * 12 + 1800));
+        assert_eq!("-1230", to_offset_str(-(3600 * 12 + 1800)));
+        assert_eq!("+2300", to_offset_str(3600 * 23));
+        assert_eq!("-2300", to_offset_str(-3600 * 23));
+        assert_eq!("+2359", to_offset_str(3600 * 23 + 3540));
+        assert_eq!("-2359", to_offset_str(-(3600 * 23 + 3540)));
     }
 }
