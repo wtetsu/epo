@@ -6,7 +6,7 @@ pub struct Settings {
 
 pub fn parse_arguments(args: Vec<String>) -> Settings {
     if args.len() <= 1 {
-        return make_default_arguments();
+        return make_default_settings();
     }
     let mut offset_secs: Vec<i32> = Vec::new();
     let mut epoch_secs: Vec<i64> = Vec::new();
@@ -35,7 +35,7 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
     }
 }
 
-pub fn make_default_arguments() -> Settings {
+pub fn make_default_settings() -> Settings {
     let now = super::date::now();
     Settings {
         offset_secs: vec![now.offset_sec],
