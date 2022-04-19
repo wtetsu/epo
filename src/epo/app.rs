@@ -1,6 +1,7 @@
+use std::collections::HashSet;
+
 pub struct Settings {
     pub offset_secs: Vec<i32>,
-    pub epoch_secs: Vec<i64>,
     pub dates: Vec<super::date::DateInfo>,
 }
 
@@ -8,58 +9,69 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
     if args.len() <= 1 {
         return make_default_settings();
     }
-    let mut offset_secs: Vec<i32> = Vec::new();
-    let mut epoch_secs: Vec<i64> = Vec::new();
+    let mut all_offset_secs: Vec<i32> = Vec::new();
     let mut dates: Vec<super::date::DateInfo> = Vec::new();
     for arg in args.iter().skip(1) {
         if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
             if let Ok(offset_sec) = super::date::parse_offset_str(arg) {
-                offset_secs.push(offset_sec);
+                all_offset_secs.push(offset_sec);
             }
         } else if super::util::is_numeric(arg) {
             let epoch_sec: i64 = arg.parse().unwrap();
-            epoch_secs.push(epoch_sec);
+            let offset_sec = super::date::get_utc_offset_sec();
+            let date_str = arg.to_string();
+            dates.push(super::date::DateInfo {
+                epoch_sec,
+                offset_sec,
+                date_str,
+            });
         } else if let Ok(dt) = super::date::parse_date_str(arg) {
+            all_offset_secs.push(dt.offset_sec);
             dates.push(dt);
         } else {
             eprintln!("Invalid date: {}", arg);
         }
     }
-    if offset_secs.is_empty() {
-        offset_secs.push(super::date::now().offset_sec);
+    if all_offset_secs.is_empty() {
+        all_offset_secs.push(super::date::now().offset_sec);
     }
-    Settings {
-        offset_secs,
-        epoch_secs,
-        dates,
+    let offset_secs = unique(all_offset_secs);
+    Settings { offset_secs, dates }
+}
+
+fn unique(values: Vec<i32>) -> Vec<i32> {
+    let mut uniq: HashSet<i32> = HashSet::new();
+
+    let mut result: Vec<i32> = Vec::new();
+    for v in values {
+        if uniq.insert(v) {
+            result.push(v);
+        }
     }
+    result
 }
 
 pub fn make_default_settings() -> Settings {
     let now = super::date::now();
     Settings {
         offset_secs: vec![now.offset_sec],
-        epoch_secs: vec![now.epoch_sec],
-        dates: vec![],
+        dates: vec![now],
     }
 }
 
 pub fn run(settings: Settings) {
-    if !settings.epoch_secs.is_empty() {
-        print_epochs(settings.epoch_secs, settings.offset_secs)
-    }
     if !settings.dates.is_empty() {
-        print_dates(settings.dates);
+        print_dates(settings.dates, settings.offset_secs)
     }
 }
 
-fn print_epochs(epoch_secs: Vec<i64>, offset_secs: Vec<i32>) {
-    for epoch in epoch_secs {
+fn print_dates(dates: Vec<super::date::DateInfo>, offset_secs: Vec<i32>) {
+    for d in dates {
         let date_strings = offset_secs
             .iter()
-            .map(|o| super::date::to_date_str(epoch, *o))
+            .map(|o| super::date::to_date_str(d.epoch_sec, *o))
             .collect::<Vec<_>>();
-        print_date_strings(epoch, date_strings);
+        print_date_strings(d.epoch_sec, date_strings);
     }
 }
 
@@ -72,10 +84,4 @@ fn print_date_strings(epoch: i64, date_strings: Vec<String>) {
         print!("{}", d);
     }
     println!();
-}
-
-fn print_dates(dates: Vec<super::date::DateInfo>) {
-    for date in dates {
-        println!("{:24} {:10}", date.date_str, date.epoch_sec);
-    }
 }

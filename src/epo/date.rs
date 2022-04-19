@@ -63,6 +63,10 @@ pub fn now() -> DateInfo {
     to_date_value(Local::now())
 }
 
+pub fn get_utc_offset_sec() -> i32 {
+    Local::now().date().offset().local_minus_utc()
+}
+
 fn to_date_value(time: DateTime<Local>) -> DateInfo {
     let epoch_sec = time.timestamp();
     let offset_sec = time.date().offset().local_minus_utc();
