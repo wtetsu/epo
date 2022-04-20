@@ -19,28 +19,18 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
     }
     let mut all_offset_secs: Vec<i32> = Vec::new();
     let mut dates: Vec<date::DateInfo> = Vec::new();
-
     let mut errors: Vec<String> = Vec::new();
 
     for arg in args.iter().skip(1) {
-        if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
-            if let Ok(offset_sec) = date::parse_offset_str(arg) {
-                all_offset_secs.push(offset_sec);
+        let r = parse_arg_value(arg);
+
+        match r {
+            ParseArgResult::Offset(offset_secs) => all_offset_secs.push(offset_secs),
+            ParseArgResult::DateInfo(date_info) => {
+                all_offset_secs.push(date_info.offset_sec);
+                dates.push(date_info);
             }
-        } else if util::is_numeric(arg) {
-            let epoch_sec: i64 = arg.parse().unwrap();
-            let offset_sec = date::get_utc_offset_sec();
-            let date_str = arg.to_string();
-            dates.push(date::DateInfo {
-                epoch_sec,
-                offset_sec,
-                date_str,
-            });
-        } else if let Ok(dt) = date::parse_date_str(arg) {
-            all_offset_secs.push(dt.offset_sec);
-            dates.push(dt);
-        } else {
-            errors.push(format!("Invalid value: {}", arg));
+            ParseArgResult::Error(error) => errors.push(error),
         }
     }
 
@@ -57,6 +47,36 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
         dates.push(date::now());
     }
     Ok(Settings { offset_secs, dates })
+}
+
+enum ParseArgResult<T1, T2, T3> {
+    Offset(T1),
+    DateInfo(T2),
+    Error(T3),
+}
+
+fn parse_arg_value(arg: &str) -> ParseArgResult<i32, date::DateInfo, String> {
+    if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
+        if let Ok(offset_sec) = date::parse_offset_str(arg) {
+            return ParseArgResult::Offset(offset_sec);
+        }
+    }
+    if util::is_numeric(arg) {
+        let epoch_sec: i64 = arg.parse().unwrap();
+        let offset_sec = date::get_utc_offset_sec();
+        let date_str = arg.to_string();
+
+        return ParseArgResult::DateInfo(date::DateInfo {
+            epoch_sec,
+            offset_sec,
+            date_str,
+        });
+    }
+    if let Ok(dt) = date::parse_date_str(arg) {
+        return ParseArgResult::DateInfo(dt);
+    }
+
+    ParseArgResult::Error(format!("Invalid value: {}", arg))
 }
 
 fn unique(values: Vec<i32>) -> Vec<i32> {
@@ -96,4 +116,62 @@ fn to_string_rows(dates: Vec<date::DateInfo>, offset_secs: Vec<i32>) -> Vec<Vec<
         rows.push(row);
     }
     rows
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_parse_arg_value_epoch() {
+        let test_data: Vec<(&str, i32)> = vec![
+            ("+1", 3600),
+            ("-0", 0),
+            ("+0", 0),
+            ("+9", 3600 * 9),
+            ("-5", -(3600 * 5)),
+            ("+23", (3600 * 23)),
+            ("-23", -(3600 * 23)),
+        ];
+
+        for (arg, expected) in test_data {
+            let r = parse_arg_value(arg);
+            match r {
+                ParseArgResult::Offset(offset) => assert_eq!(offset, expected),
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_arg_value_date() {
+        let test_data: Vec<(&str, i64)> = vec![
+            ("1970-01-01T00:00:00+0000", 0),
+            ("1970-01-01T09:00:00+0900", 0),
+            ("2022-04-21T01:15:00+0900", 1650471300),
+        ];
+
+        for (arg, expected_epoch) in test_data {
+            let r = parse_arg_value(arg);
+            match r {
+                ParseArgResult::DateInfo(date) => {
+                    assert_eq!(expected_epoch, date.epoch_sec);
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
+
+    #[test]
+    fn test_parse_arg_value_error() {
+        let test_data: Vec<&str> = vec!["+", "-", "x", "", "1x", "1.0"];
+
+        for arg in test_data {
+            let r = parse_arg_value(arg);
+
+            if let ParseArgResult::Error(_) = r {
+                continue;
+            }
+            unreachable!();
+        }
+    }
 }
