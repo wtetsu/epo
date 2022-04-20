@@ -1,4 +1,4 @@
-[![Test](https://github.com/wtetsu/epo/actions/workflows/test.yml/badge.svg)](https://github.com/wtetsu/epo/actions/workflows/test.yml)
+[![Test](https://github.com/wtetsu/epo/actions/workflows/test.yml/badge.svg)](https://github.com/wtetsu/epo/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/wtetsu/epo/branch/master/graph/badge.svg?token=26lMbyfI60)](https://codecov.io/gh/wtetsu/epo)
 
 # epo
 
