@@ -13,12 +13,15 @@ pub fn run(settings: Settings) {
     }
 }
 
-pub fn parse_arguments(args: Vec<String>) -> Settings {
+pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
     if args.len() <= 1 {
-        return make_default_settings();
+        return Ok(make_default_settings());
     }
     let mut all_offset_secs: Vec<i32> = Vec::new();
     let mut dates: Vec<date::DateInfo> = Vec::new();
+
+    let mut errors: Vec<String> = Vec::new();
+
     for arg in args.iter().skip(1) {
         if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
             if let Ok(offset_sec) = date::parse_offset_str(arg) {
@@ -37,9 +40,14 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
             all_offset_secs.push(dt.offset_sec);
             dates.push(dt);
         } else {
-            eprintln!("Invalid date: {}", arg);
+            errors.push(format!("Invalid value: {}", arg));
         }
     }
+
+    if !errors.is_empty() {
+        return Err(errors);
+    }
+
     if all_offset_secs.is_empty() {
         all_offset_secs.push(date::now().offset_sec);
     }
@@ -48,7 +56,7 @@ pub fn parse_arguments(args: Vec<String>) -> Settings {
     if dates.is_empty() {
         dates.push(date::now());
     }
-    Settings { offset_secs, dates }
+    Ok(Settings { offset_secs, dates })
 }
 
 fn unique(values: Vec<i32>) -> Vec<i32> {
