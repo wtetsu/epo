@@ -1,4 +1,5 @@
 use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
+use chrono_tz::Tz;
 
 pub struct DateInfo {
     pub epoch_sec: i64,
@@ -7,11 +8,15 @@ pub struct DateInfo {
 }
 
 pub fn to_date_str(epoch_sec: i64, offset_sec: i32) -> String {
-    let dt = Utc
-        .timestamp(epoch_sec, 0)
-        .with_timezone(&FixedOffset::east(offset_sec));
+    let dt = Utc.timestamp(epoch_sec, 0).with_timezone(&FixedOffset::east(offset_sec));
 
     return dt.format("%Y-%m-%dT%H:%M:%S%z").to_string();
+}
+
+pub fn to_date_str_with_tz(epoch_sec: i64, timezone: &str) -> String {
+    let tz: Tz = timezone.parse().unwrap();
+    let dt = tz.timestamp(epoch_sec, 0);
+    dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
 }
 
 pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
@@ -21,12 +26,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
         "%Y-%m-%d %H:%M:%S%z",
         "%Y/%m/%d %H:%M:%S%z",
     ];
-    let formats_without_offset = vec![
-        "%Y-%m-%dT%H:%M:%S",
-        "%Y/%m/%dT%H:%M:%S",
-        "%Y-%m-%d %H:%M:%S",
-        "%Y/%m/%d %H:%M:%S",
-    ];
+    let formats_without_offset = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"];
 
     for format in formats {
         if let Ok(dt) = DateTime::parse_from_str(date_str, format) {
@@ -132,6 +132,7 @@ fn parse_hours_offset_str(offset_str: &str) -> Result<i32, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_to_date_str() {
         assert_eq!("1970-01-01T00:00:00+0000", to_date_str(0, 0));
@@ -152,6 +153,22 @@ mod tests {
         assert_date(0, 0, parse_date_str("1970/01/01 00:00:00").unwrap());
     }
 
+    #[test]
+    fn test_to_date_str2() {
+        assert_eq!("1970-01-01T00:00:00+0000", to_date_str_with_tz(0, "UTC"));
+        assert_eq!("1970-01-01T00:00:00+0000", to_date_str_with_tz(0, "GMT"));
+        assert_eq!("1970-01-01T09:00:00+0900", to_date_str_with_tz(0, "Asia/Tokyo"));
+
+        assert_eq!("2022-04-17T21:09:49+0900", to_date_str_with_tz(1650197389, "Asia/Tokyo"));
+        assert_eq!("2022-04-17T12:09:49+0000", to_date_str_with_tz(1650197389, "UTC"));
+        assert_eq!("2022-04-17T08:09:49-0400", to_date_str_with_tz(1650197389, "America/New_York"));
+        assert_eq!("2022-04-17T05:09:49-0700", to_date_str_with_tz(1650197389, "America/Phoenix"));
+
+        assert_eq!("2022-01-01T02:30:40+0900", to_date_str_with_tz(1640971840, "Asia/Tokyo"));
+        assert_eq!("2021-12-31T17:30:40+0000", to_date_str_with_tz(1640971840, "UTC"));
+        assert_eq!("2021-12-31T12:30:40-0500", to_date_str_with_tz(1640971840, "America/New_York"));
+        assert_eq!("2021-12-31T10:30:40-0700", to_date_str_with_tz(1640971840, "America/Phoenix"));
+    }
     #[test]
     fn test_to_date_value() {
         let dt: Result<DateTime<Local>, _> = Local.datetime_from_str("2023/12/07 22:45:56", "%Y/%m/%d %H:%M:%S");
