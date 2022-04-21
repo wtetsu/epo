@@ -1,4 +1,4 @@
-use super::{date, util};
+use super::{date, tz, util};
 use chrono_tz::Tz;
 use std::collections::HashSet;
 
@@ -80,6 +80,15 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
 
     if arg.parse::<Tz>().is_ok() {
         return ParseArgResult::Tzname(arg.to_string());
+    }
+
+    let founds = tz::search(arg);
+    if founds.len() == 1 {
+        return ParseArgResult::Tzname(founds[0].to_string());
+    }
+
+    if founds.len() >= 2 {
+        return ParseArgResult::Error(format!("Ambiguous timezone({})", founds.join(",")));
     }
 
     ParseArgResult::Error(format!("Invalid value: {}", arg))
