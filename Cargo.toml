@@ -3,10 +3,13 @@ name = "epo"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 chrono = "0.4.19"
 chrono-tz = "0.6.1"
 once_cell = "1.10.0"
-rlua = "0.19.1"
+rhai ={ version = "1.6.1", features=["no_optimize", "no_float", "no_module", "no_closure"]}
+
+[profile.release]
+lto = "fat"         # turn on Link-Time Optimizations
+codegen-units = 1   # trade compile time with maximum optimization
+opt-level = "z"     # optimize for size

@@ -1,6 +1,6 @@
 use super::{date, tz};
 use chrono_tz::Tz;
-use rlua::Lua;
+use rhai::{Array, Dynamic, Engine};
 use std::collections::HashSet;
 
 pub struct Settings {
@@ -52,12 +52,12 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
     }
 
     if all_timezones.is_empty() {
-        all_timezones.push(TimeZone::Offset(date::now().offset_sec));
+        all_timezones.push(TimeZone::Offset(date::current_date_info().offset_sec));
     }
     let timezones = unique(all_timezones);
 
     if dates.is_empty() {
-        dates.push(date::now());
+        dates.push(date::current_date_info());
     }
     Ok(Settings { timezones, dates })
 }
@@ -103,28 +103,28 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
     ParseArgResult::Error(format!("Invalid value: {}", arg))
 }
 
-fn eval(arg: &str) -> Result<Vec<i64>, String> {
-    // Evaluate
-    let r = Lua::new().context(|lua| {
-        let r = lua.load(arg).eval::<i64>();
-        if let Ok(epoch_sec) = r {
-            return epoch_sec;
-        }
-        -1
-    });
-    if r >= 0 {
-        return Ok(vec![r]);
-    }
+fn now() -> i64 {
+    date::current_epoch()
+}
 
-    let r = Lua::new().context(|lua| {
-        let r = lua.load(arg).eval::<Vec<i64>>();
-        if let Ok(epoch_secs) = r {
-            return epoch_secs;
+fn eval(arg: &str) -> Result<Vec<i64>, String> {
+    let mut engine = Engine::new();
+    engine.register_fn("now", now);
+
+    if let Ok(r) = engine.eval::<Dynamic>(arg) {
+        if r.is::<i64>() {
+            return Ok(vec![r.cast()]);
         }
-        vec![]
-    });
-    if !r.is_empty() {
-        return Ok(r);
+
+        if r.is::<Array>() {
+            let arr = r.cast::<Array>();
+
+            let mut epochs: Vec<i64> = Vec::new();
+            for a in arr {
+                epochs.push(a.cast());
+            }
+            return Ok(epochs);
+        }
     }
 
     return Err(format!("Invalid value: {}", arg));
@@ -153,7 +153,7 @@ fn unique(values: Vec<TimeZone>) -> Vec<TimeZone> {
 }
 
 fn make_default_settings() -> Settings {
-    let now = date::now();
+    let now = date::current_date_info();
     Settings {
         timezones: vec![TimeZone::Offset(now.offset_sec)],
         dates: vec![now],

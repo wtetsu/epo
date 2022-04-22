@@ -1,5 +1,6 @@
 use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
 use chrono_tz::Tz;
+use once_cell::sync::Lazy;
 
 pub struct DateInfo {
     pub epoch_sec: i64,
@@ -59,12 +60,18 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
     Err("Parse error".to_string())
 }
 
-pub fn now() -> DateInfo {
-    to_date_value(Local::now())
+static START_DATE_TIME: Lazy<DateTime<Local>> = Lazy::new(Local::now);
+
+pub fn current_epoch() -> i64 {
+    (&START_DATE_TIME).timestamp()
+}
+
+pub fn current_date_info() -> DateInfo {
+    to_date_value((&START_DATE_TIME).with_timezone(&Local))
 }
 
 pub fn get_utc_offset_sec() -> i32 {
-    Local::now().date().offset().local_minus_utc()
+    (&START_DATE_TIME).date().offset().local_minus_utc()
 }
 
 fn to_date_value(time: DateTime<Local>) -> DateInfo {
