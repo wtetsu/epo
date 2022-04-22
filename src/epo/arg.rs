@@ -1,5 +1,6 @@
-use super::{date, tz, util};
+use super::{date, tz};
 use chrono_tz::Tz;
+use rlua::Lua;
 use std::collections::HashSet;
 
 pub struct Settings {
@@ -25,12 +26,23 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
         let r = parse_arg_value(arg);
 
         match r {
-            ParseArgResult::Offset(offset_secs) => all_timezones.push(TimeZone::Offset(offset_secs)),
+            ParseArgResult::UtcOffset(offset_secs) => all_timezones.push(TimeZone::Offset(offset_secs)),
             ParseArgResult::DateInfo(date_info) => {
                 all_timezones.push(TimeZone::Offset(date_info.offset_sec));
                 dates.push(date_info);
             }
             ParseArgResult::Tzname(tzname) => all_timezones.push(TimeZone::Tzname(tzname)),
+            ParseArgResult::Epochs(epochs) => {
+                let offset_sec = date::get_utc_offset_sec();
+                for epoch_sec in epochs {
+                    let date_str = arg.to_string();
+                    dates.push(date::DateInfo {
+                        epoch_sec,
+                        offset_sec,
+                        date_str,
+                    });
+                }
+            }
             ParseArgResult::Error(error) => errors.push(error),
         }
     }
@@ -51,47 +63,71 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
 }
 
 enum ParseArgResult {
-    Offset(i32),
-    Tzname(String),
     DateInfo(date::DateInfo),
+    Epochs(Vec<i64>),
+    UtcOffset(i32),
+    Tzname(String),
     Error(String),
 }
 
 fn parse_arg_value(arg: &str) -> ParseArgResult {
     if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
         if let Ok(offset_sec) = date::parse_offset_str(arg) {
-            return ParseArgResult::Offset(offset_sec);
+            return ParseArgResult::UtcOffset(offset_sec);
         }
     }
-    if util::is_numeric(arg) {
-        let epoch_sec: i64 = arg.parse().unwrap();
-        let offset_sec = date::get_utc_offset_sec();
-        let date_str = arg.to_string();
 
-        return ParseArgResult::DateInfo(date::DateInfo {
-            epoch_sec,
-            offset_sec,
-            date_str,
-        });
-    }
+    // Date
     if let Ok(dt) = date::parse_date_str(arg) {
         return ParseArgResult::DateInfo(dt);
     }
 
+    // Time zone name (exact match)
     if arg.parse::<Tz>().is_ok() {
         return ParseArgResult::Tzname(arg.to_string());
     }
 
+    // Time zone name (search)
     let founds = tz::search(arg);
     if founds.len() == 1 {
         return ParseArgResult::Tzname(founds[0].to_string());
     }
-
     if founds.len() >= 2 {
         return ParseArgResult::Error(format!("Ambiguous timezone({})", founds.join(",")));
     }
 
+    if let Ok(r) = eval(arg) {
+        return ParseArgResult::Epochs(r);
+    }
+
     ParseArgResult::Error(format!("Invalid value: {}", arg))
+}
+
+fn eval(arg: &str) -> Result<Vec<i64>, String> {
+    // Evaluate
+    let r = Lua::new().context(|lua| {
+        let r = lua.load(arg).eval::<i64>();
+        if let Ok(epoch_sec) = r {
+            return epoch_sec;
+        }
+        -1
+    });
+    if r >= 0 {
+        return Ok(vec![r]);
+    }
+
+    let r = Lua::new().context(|lua| {
+        let r = lua.load(arg).eval::<Vec<i64>>();
+        if let Ok(epoch_secs) = r {
+            return epoch_secs;
+        }
+        vec![]
+    });
+    if !r.is_empty() {
+        return Ok(r);
+    }
+
+    return Err(format!("Invalid value: {}", arg));
 }
 
 fn unique(values: Vec<TimeZone>) -> Vec<TimeZone> {
@@ -142,7 +178,7 @@ mod tests {
         for (arg, expected) in test_data {
             let r = parse_arg_value(arg);
             match r {
-                ParseArgResult::Offset(offset) => assert_eq!(offset, expected),
+                ParseArgResult::UtcOffset(offset) => assert_eq!(offset, expected),
                 _ => unreachable!(),
             }
         }
@@ -169,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_parse_arg_value_error() {
-        let test_data: Vec<&str> = vec!["+", "-", "x", "", "1x", "1.0"];
+        let test_data: Vec<&str> = vec!["+", "-", "x", "", "1x", "1.0.0"];
 
         for arg in test_data {
             let r = parse_arg_value(arg);
