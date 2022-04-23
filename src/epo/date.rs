@@ -28,6 +28,7 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
         "%Y/%m/%d %H:%M:%S%z",
     ];
     let formats_without_offset = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"];
+    let formats_without_date = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S"];
 
     for format in formats {
         if let Ok(dt) = DateTime::parse_from_str(date_str, format) {
@@ -40,12 +41,26 @@ pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
     }
 
     for format in formats_without_offset {
-        if let Ok(dt) = Utc.datetime_from_str(date_str, format) {
+        if let Ok(dt) = Local.datetime_from_str(date_str, format) {
             return Ok(DateInfo {
                 epoch_sec: dt.timestamp(),
-                offset_sec: 0,
+                offset_sec: dt.offset().local_minus_utc(),
                 date_str: date_str.to_string(),
             });
+        }
+    }
+
+    if date_str.len() == 10 {
+        let date_str_midnight = format!("{}T00:00:00", date_str);
+        println!("{}", date_str_midnight);
+        for format in formats_without_date {
+            if let Ok(dt) = Local.datetime_from_str(&date_str_midnight, format) {
+                return Ok(DateInfo {
+                    epoch_sec: dt.timestamp(),
+                    offset_sec: dt.offset().local_minus_utc(),
+                    date_str: date_str_midnight,
+                });
+            }
         }
     }
 
@@ -151,13 +166,14 @@ mod tests {
 
     #[test]
     fn test_parse_date_str() {
+        let o = get_utc_offset_sec();
         assert_date(0, 0, parse_date_str("1970-01-01T00:00:00+0000").unwrap());
         assert_date(3600 * 9, 0, parse_date_str("1970-01-01T09:00:00+0000").unwrap());
         assert_date(0, 32400, parse_date_str("1970-01-01T09:00:00+0900").unwrap());
         assert_date(0, 0, parse_date_str("1970/01/01T00:00:00+0000").unwrap());
         assert_date(32400, 0, parse_date_str("1970/01/01T09:00:00+0000").unwrap());
         assert_date(0, 32400, parse_date_str("1970/01/01T09:00:00+0900").unwrap());
-        assert_date(0, 0, parse_date_str("1970/01/01 00:00:00").unwrap());
+        assert_date(-(o as i64), o, parse_date_str("1970/01/01 00:00:00").unwrap());
     }
 
     #[test]
