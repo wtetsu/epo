@@ -69,6 +69,9 @@ fn new_name(full_tz_name: &str) -> Name {
     panic!();
 }
 
+// Time Zone Database
+// https://www.iana.org/time-zones
+
 fn a() -> Vec<Name> {
     vec![
         new_name("Africa/Abidjan"),
