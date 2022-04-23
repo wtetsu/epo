@@ -111,19 +111,27 @@ fn eval(arg: &str) -> Result<Vec<i64>, String> {
     let mut engine = Engine::new();
     engine.register_fn("now", now);
 
-    if let Ok(r) = engine.eval::<Dynamic>(arg) {
-        if r.is::<i64>() {
-            return Ok(vec![r.cast()]);
-        }
+    let eval_result = engine.eval::<Dynamic>(arg);
 
-        if r.is::<Array>() {
-            let arr = r.cast::<Array>();
-
-            let mut epochs: Vec<i64> = Vec::new();
-            for a in arr {
-                epochs.push(a.cast());
+    match eval_result {
+        Ok(r) => {
+            if r.is::<i64>() {
+                return Ok(vec![r.cast()]);
             }
-            return Ok(epochs);
+
+            if r.is::<Array>() {
+                let arr = r.cast::<Array>();
+
+                let mut epochs: Vec<i64> = Vec::new();
+                for a in arr {
+                    epochs.push(a.cast());
+                }
+                return Ok(epochs);
+            }
+        }
+        Err(e) => {
+            eprintln!("{}", e);
+            return Err(format!("Invalid value: {}", arg));
         }
     }
 
