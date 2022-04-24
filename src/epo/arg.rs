@@ -4,6 +4,7 @@ use rhai::{Array, Dynamic, Engine};
 use std::collections::HashSet;
 
 pub struct Settings {
+    pub epochs: Vec<date::EpochInfo>,
     pub dates: Vec<date::DateInfo>,
     pub timezones: Vec<TimeZone>,
 }
@@ -19,30 +20,30 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
     }
 
     let mut all_timezones: Vec<TimeZone> = Vec::new();
+    let mut epochs: Vec<date::EpochInfo> = Vec::new();
     let mut dates: Vec<date::DateInfo> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
 
     for arg in args.iter().skip(1) {
-        let r = parse_arg_value(arg);
-
-        match r {
+        match parse_arg_value(arg) {
             ParseArgResult::UtcOffset(offset_secs) => all_timezones.push(TimeZone::Offset(offset_secs)),
-            ParseArgResult::DateInfo(date_info) => {
-                all_timezones.push(TimeZone::Offset(date_info.offset_sec));
-                dates.push(date_info);
+            ParseArgResult::EpochInfo(epoch_info) => {
+                all_timezones.push(TimeZone::Offset(epoch_info.offset_sec));
+                epochs.push(epoch_info);
             }
             ParseArgResult::Tzname(tzname) => all_timezones.push(TimeZone::Tzname(tzname)),
-            ParseArgResult::Epochs(epochs) => {
+            ParseArgResult::Epochs(epoch_secs) => {
                 let offset_sec = date::get_utc_offset_sec();
-                for epoch_sec in epochs {
+                for epoch_sec in epoch_secs {
                     let date_str = arg.to_string();
-                    dates.push(date::DateInfo {
+                    epochs.push(date::EpochInfo {
                         epoch_sec,
                         offset_sec,
                         date_str,
                     });
                 }
             }
+            ParseArgResult::DateInfo(date_info) => dates.push(date_info),
             ParseArgResult::Error(error) => errors.push(error),
         }
     }
@@ -56,15 +57,16 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
     }
     let timezones = unique(all_timezones);
 
-    if dates.is_empty() {
-        dates.push(date::current_date_info());
+    if epochs.is_empty() {
+        epochs.push(date::current_date_info());
     }
-    Ok(Settings { timezones, dates })
+    Ok(Settings { epochs, dates, timezones })
 }
 
 enum ParseArgResult {
-    DateInfo(date::DateInfo),
+    EpochInfo(date::EpochInfo),
     Epochs(Vec<i64>),
+    DateInfo(date::DateInfo),
     UtcOffset(i32),
     Tzname(String),
     Error(String),
@@ -77,8 +79,13 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
         }
     }
 
-    // Date
-    if let Ok(dt) = date::parse_date_str(arg) {
+    // Date with offset
+    if let Ok(dt) = date::parse_date_with_offset_str(arg) {
+        return ParseArgResult::EpochInfo(dt);
+    }
+
+    // Date without offset
+    if let Ok(dt) = date::parse_naive_date_str(arg) {
         return ParseArgResult::DateInfo(dt);
     }
 
@@ -164,7 +171,8 @@ fn make_default_settings() -> Settings {
     let now = date::current_date_info();
     Settings {
         timezones: vec![TimeZone::Offset(now.offset_sec)],
-        dates: vec![now],
+        epochs: vec![now],
+        dates: vec![],
     }
 }
 
@@ -203,7 +211,7 @@ mod tests {
         for (arg, expected_epoch) in test_data {
             let r = parse_arg_value(arg);
             match r {
-                ParseArgResult::DateInfo(date) => {
+                ParseArgResult::EpochInfo(date) => {
                     assert_eq!(expected_epoch, date.epoch_sec);
                 }
                 _ => unreachable!(),

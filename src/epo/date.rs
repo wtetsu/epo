@@ -1,10 +1,15 @@
-use chrono::{DateTime, FixedOffset, Local, TimeZone, Utc};
+use chrono::{DateTime, FixedOffset, Local, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use chrono_tz::Tz;
 use once_cell::sync::Lazy;
 
-pub struct DateInfo {
+pub struct EpochInfo {
     pub epoch_sec: i64,
     pub offset_sec: i32,
+    pub date_str: String,
+}
+
+pub struct DateInfo {
+    pub date_time: NaiveDateTime,
     pub date_str: String,
 }
 
@@ -20,56 +25,55 @@ pub fn to_date_str_with_tz(epoch_sec: i64, timezone: &str) -> String {
     dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
 }
 
-pub fn parse_date_str(date_str: &str) -> Result<DateInfo, String> {
+pub fn parse_date_with_offset_str(date_str: &str) -> Result<EpochInfo, String> {
     let formats = vec![
         "%Y-%m-%dT%H:%M:%S%z",
         "%Y/%m/%dT%H:%M:%S%z",
         "%Y-%m-%d %H:%M:%S%z",
         "%Y/%m/%d %H:%M:%S%z",
     ];
-    let formats_without_offset = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"];
-    let formats_without_date = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S"];
 
     for format in formats {
         if let Ok(dt) = DateTime::parse_from_str(date_str, format) {
-            return Ok(DateInfo {
+            return Ok(EpochInfo {
                 epoch_sec: dt.timestamp(),
                 offset_sec: dt.offset().local_minus_utc(),
                 date_str: date_str.to_string(),
             });
-        }
-    }
-
-    for format in formats_without_offset {
-        if let Ok(dt) = Local.datetime_from_str(date_str, format) {
-            return Ok(DateInfo {
-                epoch_sec: dt.timestamp(),
-                offset_sec: dt.offset().local_minus_utc(),
-                date_str: date_str.to_string(),
-            });
-        }
-    }
-
-    if date_str.len() == 10 {
-        let date_str_midnight = format!("{}T00:00:00", date_str);
-        println!("{}", date_str_midnight);
-        for format in formats_without_date {
-            if let Ok(dt) = Local.datetime_from_str(&date_str_midnight, format) {
-                return Ok(DateInfo {
-                    epoch_sec: dt.timestamp(),
-                    offset_sec: dt.offset().local_minus_utc(),
-                    date_str: date_str_midnight,
-                });
-            }
         }
     }
 
     if let Ok(dt) = DateTime::parse_from_rfc2822(date_str) {
-        return Ok(DateInfo {
+        return Ok(EpochInfo {
             epoch_sec: dt.timestamp(),
             offset_sec: 0,
             date_str: date_str.to_string(),
         });
+    }
+
+    Err("Parse error".to_string())
+}
+
+pub fn parse_naive_date_str(date_str: &str) -> Result<DateInfo, String> {
+    let formats_without_offset = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"];
+    let formats_without_time = vec!["%Y-%m-%d", "%Y/%m/%d"];
+
+    for format in formats_without_offset {
+        if let Ok(date_time) = NaiveDateTime::parse_from_str(date_str, format) {
+            return Ok(DateInfo {
+                date_time,
+                date_str: date_str.to_string(),
+            });
+        }
+    }
+    for format in formats_without_time {
+        if let Ok(date) = NaiveDate::parse_from_str(date_str, format) {
+            let date_time = date.and_hms(0, 0, 0);
+            return Ok(DateInfo {
+                date_time,
+                date_str: date_str.to_string(),
+            });
+        }
     }
 
     Err("Parse error".to_string())
@@ -81,7 +85,7 @@ pub fn current_epoch() -> i64 {
     (&START_DATE_TIME).timestamp()
 }
 
-pub fn current_date_info() -> DateInfo {
+pub fn current_date_info() -> EpochInfo {
     to_date_value((&START_DATE_TIME).with_timezone(&Local))
 }
 
@@ -89,12 +93,12 @@ pub fn get_utc_offset_sec() -> i32 {
     (&START_DATE_TIME).date().offset().local_minus_utc()
 }
 
-fn to_date_value(time: DateTime<Local>) -> DateInfo {
+fn to_date_value(time: DateTime<Local>) -> EpochInfo {
     let epoch_sec = time.timestamp();
     let offset_sec = time.date().offset().local_minus_utc();
     let date_str = to_date_str(epoch_sec, offset_sec / 3600);
 
-    DateInfo {
+    EpochInfo {
         epoch_sec,
         offset_sec,
         date_str,
@@ -165,15 +169,13 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_date_str() {
-        let o = get_utc_offset_sec();
-        assert_date(0, 0, parse_date_str("1970-01-01T00:00:00+0000").unwrap());
-        assert_date(3600 * 9, 0, parse_date_str("1970-01-01T09:00:00+0000").unwrap());
-        assert_date(0, 32400, parse_date_str("1970-01-01T09:00:00+0900").unwrap());
-        assert_date(0, 0, parse_date_str("1970/01/01T00:00:00+0000").unwrap());
-        assert_date(32400, 0, parse_date_str("1970/01/01T09:00:00+0000").unwrap());
-        assert_date(0, 32400, parse_date_str("1970/01/01T09:00:00+0900").unwrap());
-        assert_date(-(o as i64), o, parse_date_str("1970/01/01 00:00:00").unwrap());
+    fn test_parse_date_with_offset_str() {
+        assert_date(0, 0, parse_date_with_offset_str("1970-01-01T00:00:00+0000").unwrap());
+        assert_date(3600 * 9, 0, parse_date_with_offset_str("1970-01-01T09:00:00+0000").unwrap());
+        assert_date(0, 32400, parse_date_with_offset_str("1970-01-01T09:00:00+0900").unwrap());
+        assert_date(0, 0, parse_date_with_offset_str("1970/01/01T00:00:00+0000").unwrap());
+        assert_date(32400, 0, parse_date_with_offset_str("1970/01/01T09:00:00+0000").unwrap());
+        assert_date(0, 32400, parse_date_with_offset_str("1970/01/01T09:00:00+0900").unwrap());
     }
 
     #[test]
@@ -198,7 +200,7 @@ mod tests {
         assert!(to_date_value(dt.unwrap()).date_str.ends_with("+0000"));
     }
 
-    fn assert_date(epoch_sec: i64, offset: i32, date_value: DateInfo) {
+    fn assert_date(epoch_sec: i64, offset: i32, date_value: EpochInfo) {
         assert_eq!(epoch_sec, date_value.epoch_sec);
         assert_eq!(offset, date_value.offset_sec);
     }
