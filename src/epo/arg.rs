@@ -1,6 +1,5 @@
-use super::{date, tz};
+use super::{date, script, tz};
 use chrono_tz::Tz;
-use rhai::{Array, Dynamic, Engine};
 use std::collections::HashSet;
 
 pub struct Settings {
@@ -103,46 +102,11 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
         return ParseArgResult::Error(format!("Ambiguous timezone({})", founds.join(",")));
     }
 
-    if let Ok(r) = eval(arg) {
+    if let Ok(r) = script::eval(arg) {
         return ParseArgResult::Epochs(r);
     }
 
     ParseArgResult::Error(format!("Invalid value: {}", arg))
-}
-
-fn now() -> i64 {
-    date::current_epoch()
-}
-
-fn eval(arg: &str) -> Result<Vec<i64>, String> {
-    let mut engine = Engine::new();
-    engine.register_fn("now", now);
-
-    let eval_result = engine.eval::<Dynamic>(arg);
-
-    match eval_result {
-        Ok(r) => {
-            if r.is::<i64>() {
-                return Ok(vec![r.cast()]);
-            }
-
-            if r.is::<Array>() {
-                let arr = r.cast::<Array>();
-
-                let mut epochs: Vec<i64> = Vec::new();
-                for a in arr {
-                    epochs.push(a.cast());
-                }
-                return Ok(epochs);
-            }
-        }
-        Err(e) => {
-            eprintln!("{}", e);
-            return Err(format!("Invalid value: {}", arg));
-        }
-    }
-
-    return Err(format!("Invalid value: {}", arg));
 }
 
 fn unique(values: Vec<TimeZone>) -> Vec<TimeZone> {
