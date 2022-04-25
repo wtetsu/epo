@@ -57,7 +57,7 @@ pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
     }
     let timezones = unique(all_timezones);
 
-    if epochs.is_empty() {
+    if epochs.is_empty() && dates.is_empty() {
         epochs.push(date::current_date_info());
     }
     Ok(Settings { epochs, dates, timezones })
