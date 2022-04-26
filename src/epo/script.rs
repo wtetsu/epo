@@ -1,15 +1,15 @@
 use super::date;
 use boa_engine::object::JsObject;
+use boa_engine::property::Attribute;
 use boa_engine::property::PropertyKey;
 use boa_engine::Context;
 use boa_engine::JsValue;
 
-fn now() -> i64 {
-    date::current_epoch()
-}
-
 pub fn eval(js_code: &str) -> Result<Vec<i64>, String> {
     let mut context = Context::default();
+
+    context.register_global_property("now", date::current_epoch(), Attribute::all());
+
     let r = context.eval(js_code);
 
     if let Ok(val) = r {
