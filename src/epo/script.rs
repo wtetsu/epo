@@ -8,37 +8,6 @@ fn now() -> i64 {
     date::current_epoch()
 }
 
-// pub fn eval_(arg: &str) -> Result<Vec<i64>, String> {
-//     let mut engine = Engine::new();
-//     engine.register_fn("now", now);
-
-//     let eval_result = engine.eval::<Dynamic>(arg);
-
-//     match eval_result {
-//         Ok(r) => {
-//             if r.is::<i64>() {
-//                 return Ok(vec![r.cast()]);
-//             }
-
-//             if r.is::<Array>() {
-//                 let arr = r.cast::<Array>();
-
-//                 let mut epochs: Vec<i64> = Vec::new();
-//                 for a in arr {
-//                     epochs.push(a.cast());
-//                 }
-//                 return Ok(epochs);
-//             }
-//         }
-//         Err(e) => {
-//             eprintln!("{}", e);
-//             return Err(format!("Invalid value: {}", arg));
-//         }
-//     }
-
-//     return Err(format!("Invalid value: {}", arg));
-// }
-
 pub fn eval(js_code: &str) -> Result<Vec<i64>, String> {
     let mut context = Context::default();
     let r = context.eval(js_code);
