@@ -60,6 +60,6 @@ where
     let r = obj.get(key, context);
     match r {
         Ok(v) => Ok(v),
-        Err(e) => Err("No such property".to_string()),
+        Err(_) => Err("No such property".to_string()),
     }
 }
