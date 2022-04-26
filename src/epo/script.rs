@@ -72,6 +72,8 @@ fn to_int_values(obj: &JsObject, context: &mut Context) -> Result<Vec<i64>, Stri
             let val = obj_get(obj, i, context)?;
             if let JsValue::Integer(i) = val {
                 values.push(i as i64);
+            } else if let JsValue::Rational(f) = val {
+                values.push(f as i64);
             } else {
                 return Err("value is not integer".to_string());
             }
