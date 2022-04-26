@@ -2,7 +2,8 @@ use once_cell::sync::Lazy;
 
 struct Name {
     full_name: String,
-    location: String,
+    location_lower: String,
+    full_name_lower: String,
 }
 
 static DATA: Lazy<Vec<Vec<Name>>> = Lazy::new(|| {
@@ -39,15 +40,32 @@ static DATA: Lazy<Vec<Vec<Name>>> = Lazy::new(|| {
 pub fn search(search_name: &str) -> Vec<String> {
     let mut found: Vec<String> = Vec::new();
 
-    let r = search_name.chars().next();
+    let lower_search_name = &search_name.to_ascii_lowercase();
+    let r = lower_search_name.chars().next();
 
-    if let Some(first_letter) = r {
-        let c = (first_letter.to_ascii_lowercase() as i32) - ('a' as i32);
-        if (0..26).contains(&c) {
+    if r == None {
+        return found;
+    }
+
+    let first_letter = r.unwrap();
+
+    let c = (first_letter as i32) - ('a' as i32);
+    if !(0..26).contains(&c) {
+        return found;
+    }
+
+    let data = &DATA[c as usize];
+    for name in data {
+        if name.location_lower.starts_with(lower_search_name) {
+            found.push(name.full_name.clone());
+        }
+    }
+
+    if search_name.contains('/') {
+        for c in 0..26 {
             let data = &DATA[c as usize];
-            let lower_search_name = &search_name.to_lowercase();
             for name in data {
-                if name.location.starts_with(lower_search_name) {
+                if name.full_name_lower.starts_with(lower_search_name) {
                     found.push(name.full_name.clone());
                 }
             }
@@ -61,9 +79,14 @@ fn new_name(full_tz_name: &str) -> Name {
     let r = full_tz_name.rfind('/');
 
     if let Some(idx) = r {
-        let location = full_tz_name[(idx + 1)..].to_lowercase();
+        let location_lower = full_tz_name[(idx + 1)..].to_lowercase();
         let full_name = full_tz_name.to_string();
-        return Name { full_name, location };
+        let full_name_lower = full_tz_name.to_lowercase();
+        return Name {
+            full_name,
+            location_lower,
+            full_name_lower,
+        };
     }
 
     panic!();
