@@ -102,11 +102,10 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
         return ParseArgResult::Error(format!("Ambiguous timezone({})", founds.join(",")));
     }
 
-    if let Ok(r) = script::eval(arg) {
-        return ParseArgResult::Epochs(r);
+    match script::eval(arg) {
+        Ok(r) => ParseArgResult::Epochs(r),
+        Err(e) => ParseArgResult::Error(e),
     }
-
-    ParseArgResult::Error(format!("Invalid value: {}", arg))
 }
 
 fn unique(values: Vec<TimeZone>) -> Vec<TimeZone> {

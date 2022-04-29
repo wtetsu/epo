@@ -31,10 +31,11 @@ fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones: &Ve
     for date in epoch_infos {
         let mut row: Vec<String> = vec![date.epoch_sec.to_string()];
         for t in timezones {
-            match t {
-                arg::TimeZone::Offset(offset_sec) => row.push(date::to_date_str(date.epoch_sec, *offset_sec)),
-                arg::TimeZone::Tzname(tzname) => row.push(date::to_date_str_with_tz(date.epoch_sec, tzname)),
-            }
+            let s = match t {
+                arg::TimeZone::Offset(offset_sec) => date::to_date_str(date.epoch_sec, *offset_sec),
+                arg::TimeZone::Tzname(tzname) => date::to_date_str_with_tz(date.epoch_sec, tzname),
+            };
+            row.push(s);
         }
         rows.push(row);
     }

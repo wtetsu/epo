@@ -16,7 +16,7 @@ pub struct DateInfo {
 pub fn to_date_str(epoch_sec: i64, offset_sec: i32) -> String {
     let dt = Utc.timestamp(epoch_sec, 0).with_timezone(&FixedOffset::east(offset_sec));
 
-    return dt.format("%Y-%m-%dT%H:%M:%S%z").to_string();
+    dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
 }
 
 pub fn to_date_str_with_tz(epoch_sec: i64, timezone: &str) -> String {
