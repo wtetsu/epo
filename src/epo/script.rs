@@ -83,3 +83,46 @@ where
         Err(_) => Err("No such property".to_string()),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_simple_number() {
+        assert_eq!(vec!(0), eval("0").unwrap());
+        assert_eq!(vec!(1651256673), eval("1651256673").unwrap());
+        assert_eq!(vec!(8210298326399), eval("8210298326399").unwrap());
+    }
+    #[test]
+    fn test_numbers() {
+        assert_eq!(vec!(0, 1, 2), eval("[0,1,2]").unwrap());
+        assert_eq!(
+            vec!(-8210298326398, -8210298326399),
+            eval("[-8210298326398,-8210298326399]").unwrap()
+        );
+        assert_eq!(vec!(8210298326398, 8210298326399), eval("[8210298326398,8210298326399]").unwrap());
+
+        assert_eq!(vec!(0, 1, 2), eval("[0.9,1.1,2.9]").unwrap());
+    }
+
+    #[test]
+    fn test_scripts() {
+        assert_eq!(vec!(997002999), eval("999*999*999").unwrap());
+
+        assert_eq!(
+            vec!(1651256673, 1651256674, 1651256675),
+            eval("[0,1,2].map(a=>1651256673+a)").unwrap()
+        );
+
+        assert_eq!(
+            vec!(1651256673, 1651256674, 1651256675, 1651256676, 1651256677),
+            eval("[...Array(5).keys()].map(a=>1651256673+a)").unwrap()
+        );
+    }
+
+    #[test]
+    fn test_errors() {
+        assert!(eval("8210298326400").is_err());
+        assert!(eval("-8210298326400").is_err());
+    }
+}
