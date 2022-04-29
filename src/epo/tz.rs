@@ -104,7 +104,6 @@ fn a() -> Vec<Name> {
         new_name("Africa/Asmara"),
         new_name("America/Adak"),
         new_name("America/Anchorage"),
-        new_name("America/AnguillaSandy Hill"),
         new_name("America/Antigua"),
         new_name("America/Araguaina"),
         new_name("America/Aruba"),
@@ -278,7 +277,6 @@ fn g() -> Vec<Name> {
         new_name("Pacific/Galapagos"),
         new_name("Pacific/Gambier"),
         new_name("Pacific/Guadalcanal"),
-        new_name("Pacific/GuamVillage"),
     ]
 }
 
