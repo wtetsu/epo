@@ -195,4 +195,33 @@ mod tests {
             unreachable!();
         }
     }
+
+    #[test]
+    fn test_parse_arguments_default() {
+        let actual = parse_arguments(vec![]).unwrap();
+        let now = date::current_date_info();
+
+        assert_eq!(0, actual.dates.len());
+        assert_eq!(1, actual.timezones.len());
+        assert_eq!(1, actual.epochs.len());
+        assert_eq!(now.epoch_sec, actual.epochs[0].epoch_sec);
+    }
+
+    #[test]
+    fn test_parse_arguments() {
+        let actual = parse_arguments(vec![
+            String::from("dummy"),
+            String::from("2022-04-01"),
+            String::from("0"),
+            String::from("+9"),
+            String::from("-5"),
+            String::from("tokyo"),
+            String::from("new_y"),
+        ])
+        .unwrap();
+
+        assert_eq!(1, actual.dates.len());
+        assert_eq!(4, actual.timezones.len());
+        assert_eq!(1, actual.epochs.len());
+    }
 }
