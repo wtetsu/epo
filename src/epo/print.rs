@@ -1,16 +1,80 @@
+use super::{arg, date};
+use chrono::{FixedOffset, TimeZone};
+use chrono_tz::Tz;
+use std::io::{stdout, BufWriter, Write};
+
+pub fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones: &Vec<arg::TimeZone>) -> Vec<Vec<String>> {
+    let mut headers: Vec<String> = vec!["Epoch".to_string()];
+    for t in timezones {
+        match t {
+            arg::TimeZone::Offset(offset_sec) => headers.push(date::to_offset_str(*offset_sec)),
+            arg::TimeZone::Tzname(tzname) => headers.push(tzname.to_string()),
+        }
+    }
+
+    let mut rows: Vec<Vec<String>> = vec![headers];
+
+    for date in epoch_infos {
+        let mut row: Vec<String> = vec![date.epoch_sec.to_string()];
+        for t in timezones {
+            let s = match t {
+                arg::TimeZone::Offset(offset_sec) => date::to_date_str(date.epoch_sec, *offset_sec),
+                arg::TimeZone::Tzname(tzname) => date::to_date_str_with_tz(date.epoch_sec, tzname),
+            };
+            row.push(s);
+        }
+        rows.push(row);
+    }
+    rows
+}
+
+pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &Vec<arg::TimeZone>) -> Vec<Vec<String>> {
+    let mut headers: Vec<String> = vec!["Date".to_string()];
+    for t in timezones {
+        match t {
+            arg::TimeZone::Offset(offset_sec) => headers.push(date::to_offset_str(*offset_sec)),
+            arg::TimeZone::Tzname(tzname) => headers.push(tzname.to_string()),
+        }
+    }
+    let mut rows: Vec<Vec<String>> = vec![headers];
+
+    for date in date_infos {
+        let mut row: Vec<String> = vec![date.date_str.to_string()];
+        for t in timezones {
+            match t {
+                arg::TimeZone::Offset(offset_sec) => {
+                    let dt = FixedOffset::east(*offset_sec).from_local_datetime(&date.date_time).unwrap();
+                    row.push(dt.timestamp().to_string());
+                }
+                arg::TimeZone::Tzname(tzname) => {
+                    let tz: Tz = tzname.parse().unwrap();
+                    let dt = tz.from_local_datetime(&date.date_time).unwrap();
+                    row.push(dt.timestamp().to_string());
+                }
+            }
+        }
+        rows.push(row);
+    }
+
+    rows
+}
+
+#[allow(unused_must_use)]
 pub fn print_markdown_table(data: &Vec<Vec<String>>) {
+    let out = stdout();
+    let mut buf = BufWriter::new(out.lock());
+
     let max_lengths = calc_max_column_length(data);
 
     for (i, row) in data.iter().enumerate() {
         for (i, cell) in row.iter().enumerate() {
             let width = max_lengths[i];
-            print!("| {:>width$} ", cell);
+            write!(buf, "| {:>width$} ", cell);
         }
-        print!("|");
-        println!();
+        writeln!(buf, "|");
 
         if i == 0 {
-            println!("{}", generate_header_line(&max_lengths));
+            writeln!(buf, "{}", generate_header_line(&max_lengths));
         }
     }
 }
@@ -38,4 +102,18 @@ fn calc_max_column_length(data: &Vec<Vec<String>>) -> Vec<usize> {
     }
 
     max_len
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_string_rows_empty() {
+        let epochs: Vec<date::EpochInfo> = Vec::new();
+        let timezones: Vec<arg::TimeZone> = Vec::new();
+
+        let r = to_string_rows_from_epochs(&epochs, &timezones);
+        assert_eq!(1, r.len());
+    }
 }
