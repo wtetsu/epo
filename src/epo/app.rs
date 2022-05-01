@@ -1,6 +1,6 @@
 use super::{arg, print};
 
-pub fn run(settings: arg::Settings) {
+pub fn run(settings: &arg::Settings) {
     if !settings.epochs.is_empty() {
         let data = print::to_string_rows_from_epochs(&settings.epochs, &settings.timezones);
         print::print_markdown_table(&data);
@@ -27,7 +27,7 @@ mod tests {
             epochs: vec![],
             dates: vec![],
         };
-        run(settings);
+        run(&settings);
     }
 
     #[test]
@@ -53,6 +53,6 @@ mod tests {
             ],
             dates: vec![],
         };
-        run(settings);
+        run(&settings);
     }
 }

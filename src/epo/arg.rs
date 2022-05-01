@@ -13,7 +13,7 @@ pub enum TimeZone {
     Tzname(String),
 }
 
-pub fn parse_arguments(args: Vec<String>) -> Result<Settings, Vec<String>> {
+pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     if args.len() <= 1 {
         return Ok(make_default_settings());
     }
@@ -198,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_parse_arguments_default() {
-        let actual = parse_arguments(vec![]).unwrap();
+        let actual = parse_arguments(&[]).unwrap();
         let now = date::current_date_info();
 
         assert_eq!(0, actual.dates.len());
@@ -209,7 +209,7 @@ mod tests {
 
     #[test]
     fn test_parse_arguments() {
-        let actual = parse_arguments(vec![
+        let actual = parse_arguments(&[
             String::from("dummy"),
             String::from("2022-04-01"),
             String::from("0"),
