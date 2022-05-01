@@ -6,11 +6,17 @@ pub struct Settings {
     pub epochs: Vec<date::EpochInfo>,
     pub dates: Vec<date::DateInfo>,
     pub timezones: Vec<TimeZone>,
+    pub mode: Mode,
 }
 
 pub enum TimeZone {
     Offset(i32),
     Tzname(String),
+}
+
+pub enum Mode {
+    Seconds,
+    Milliseconds,
 }
 
 pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
@@ -31,9 +37,9 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
                 epochs.push(epoch_info);
             }
             ParseArgResult::Tzname(tzname) => all_timezones.push(TimeZone::Tzname(tzname)),
-            ParseArgResult::Epochs(epoch_secs) => {
+            ParseArgResult::Epochs(epoch) => {
                 let offset_sec = date::get_utc_offset_sec();
-                for epoch_sec in epoch_secs {
+                for epoch_sec in epoch {
                     let date_str = arg.to_string();
                     epochs.push(date::EpochInfo {
                         epoch_sec,
@@ -59,7 +65,14 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     if epochs.is_empty() && dates.is_empty() {
         epochs.push(date::current_date_info());
     }
-    Ok(Settings { epochs, dates, timezones })
+
+    let mode = Mode::Seconds;
+    Ok(Settings {
+        epochs,
+        dates,
+        timezones,
+        mode,
+    })
 }
 
 enum ParseArgResult {
@@ -136,6 +149,7 @@ fn make_default_settings() -> Settings {
         timezones: vec![TimeZone::Offset(now.offset_sec)],
         epochs: vec![now],
         dates: vec![],
+        mode: Mode::Seconds,
     }
 }
 
