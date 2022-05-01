@@ -1,6 +1,10 @@
-use super::{arg, print};
+use super::{arg, date, help, print};
 
 pub fn run(settings: &arg::Settings) {
+    if settings.help {
+        println!("{}", help::usage(date::current_epoch()));
+        return;
+    }
     if !settings.epochs.is_empty() {
         let (header, data) = print::to_string_rows_from_epochs(&settings.epochs, &settings.timezones);
         print(&header, &data, &settings.print_mode);
@@ -35,6 +39,7 @@ mod tests {
             dates: vec![],
             time_mode: arg::TimeMode::Seconds,
             print_mode: arg::PrintMode::Markdown,
+            help: false,
         };
         run(&settings);
     }
@@ -63,6 +68,7 @@ mod tests {
             dates: vec![],
             time_mode: arg::TimeMode::Seconds,
             print_mode: arg::PrintMode::Markdown,
+            help: false,
         };
         run(&settings);
     }

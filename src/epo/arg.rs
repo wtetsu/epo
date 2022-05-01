@@ -8,6 +8,7 @@ pub struct Settings {
     pub timezones: Vec<TimeZone>,
     pub time_mode: TimeMode,
     pub print_mode: PrintMode,
+    pub help: bool,
 }
 
 pub enum TimeZone {
@@ -36,6 +37,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     let mut errors: Vec<String> = Vec::new();
     let mut time_mode = TimeMode::Seconds;
     let mut print_mode = PrintMode::Markdown;
+    let mut help = false;
 
     for arg in args.iter().skip(1) {
         match parse_arg_value(arg) {
@@ -59,6 +61,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
             ParseArgResult::DateInfo(date_info) => dates.push(date_info),
             ParseArgResult::TimeMode(new_time_mode) => time_mode = new_time_mode,
             ParseArgResult::PrintMode(new_print_mode) => print_mode = new_print_mode,
+            ParseArgResult::Help(new_help) => help = new_help,
             ParseArgResult::Error(error) => errors.push(error),
         }
     }
@@ -82,6 +85,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
         timezones,
         time_mode,
         print_mode,
+        help,
     })
 }
 
@@ -94,6 +98,7 @@ enum ParseArgResult {
     Error(String),
     TimeMode(TimeMode),
     PrintMode(PrintMode),
+    Help(bool),
 }
 
 fn parse_arg_value(arg: &str) -> ParseArgResult {
@@ -106,6 +111,7 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
     match arg {
         "-m" => return ParseArgResult::TimeMode(TimeMode::Milliseconds),
         "-p" => return ParseArgResult::PrintMode(PrintMode::PlainText),
+        "-h" => return ParseArgResult::Help(true),
         _ => {}
     }
 
@@ -169,6 +175,7 @@ fn make_default_settings() -> Settings {
         dates: vec![],
         time_mode: TimeMode::Seconds,
         print_mode: PrintMode::Markdown,
+        help: false,
     }
 }
 
