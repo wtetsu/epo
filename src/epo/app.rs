@@ -26,7 +26,8 @@ mod tests {
             timezones: vec![],
             epochs: vec![],
             dates: vec![],
-            mode: arg::Mode::Seconds,
+            time_mode: arg::TimeMode::Seconds,
+            print_mode: arg::PrintMode::Markdown,
         };
         run(&settings);
     }
@@ -53,7 +54,8 @@ mod tests {
                 },
             ],
             dates: vec![],
-            mode: arg::Mode::Seconds,
+            time_mode: arg::TimeMode::Seconds,
+            print_mode: arg::PrintMode::Markdown,
         };
         run(&settings);
     }

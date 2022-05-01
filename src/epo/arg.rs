@@ -6,7 +6,8 @@ pub struct Settings {
     pub epochs: Vec<date::EpochInfo>,
     pub dates: Vec<date::DateInfo>,
     pub timezones: Vec<TimeZone>,
-    pub mode: Mode,
+    pub time_mode: TimeMode,
+    pub print_mode: PrintMode,
 }
 
 pub enum TimeZone {
@@ -14,9 +15,14 @@ pub enum TimeZone {
     Tzname(String),
 }
 
-pub enum Mode {
+pub enum TimeMode {
     Seconds,
     Milliseconds,
+}
+
+pub enum PrintMode {
+    Markdown,
+    PlainText,
 }
 
 pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
@@ -28,6 +34,8 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     let mut epochs: Vec<date::EpochInfo> = Vec::new();
     let mut dates: Vec<date::DateInfo> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
+    let mut time_mode = TimeMode::Seconds;
+    let mut print_mode = PrintMode::Markdown;
 
     for arg in args.iter().skip(1) {
         match parse_arg_value(arg) {
@@ -49,6 +57,8 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
                 }
             }
             ParseArgResult::DateInfo(date_info) => dates.push(date_info),
+            ParseArgResult::TimeMode(new_time_mode) => time_mode = new_time_mode,
+            ParseArgResult::PrintMode(new_print_mode) => print_mode = new_print_mode,
             ParseArgResult::Error(error) => errors.push(error),
         }
     }
@@ -66,12 +76,12 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
         epochs.push(date::current_date_info());
     }
 
-    let mode = Mode::Seconds;
     Ok(Settings {
         epochs,
         dates,
         timezones,
-        mode,
+        time_mode,
+        print_mode,
     })
 }
 
@@ -82,6 +92,8 @@ enum ParseArgResult {
     UtcOffset(i32),
     Tzname(String),
     Error(String),
+    TimeMode(TimeMode),
+    PrintMode(PrintMode),
 }
 
 fn parse_arg_value(arg: &str) -> ParseArgResult {
@@ -89,6 +101,12 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
         if let Ok(offset_sec) = date::parse_offset_str(arg) {
             return ParseArgResult::UtcOffset(offset_sec);
         }
+    }
+
+    match arg {
+        "-m" => return ParseArgResult::TimeMode(TimeMode::Milliseconds),
+        "-p" => return ParseArgResult::PrintMode(PrintMode::PlainText),
+        _ => {}
     }
 
     // Date with offset
@@ -149,7 +167,8 @@ fn make_default_settings() -> Settings {
         timezones: vec![TimeZone::Offset(now.offset_sec)],
         epochs: vec![now],
         dates: vec![],
-        mode: Mode::Seconds,
+        time_mode: TimeMode::Seconds,
+        print_mode: PrintMode::Markdown,
     }
 }
 
