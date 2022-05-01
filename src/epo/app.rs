@@ -2,22 +2,22 @@ use super::{arg, print};
 
 pub fn run(settings: &arg::Settings) {
     if !settings.epochs.is_empty() {
-        let data = print::to_string_rows_from_epochs(&settings.epochs, &settings.timezones);
-        print(&data, &settings.print_mode);
+        let (header, data) = print::to_string_rows_from_epochs(&settings.epochs, &settings.timezones);
+        print(&header, &data, &settings.print_mode);
     }
 
     if !settings.dates.is_empty() {
         if !settings.epochs.is_empty() {
             println!();
         }
-        let data = print::to_string_rows_from_dates(&settings.dates, &settings.timezones);
-        print(&data, &settings.print_mode);
+        let (header, data) = print::to_string_rows_from_dates(&settings.dates, &settings.timezones);
+        print(&header, &data, &settings.print_mode);
     }
 }
 
-pub fn print(data: &Vec<Vec<String>>, mode: &arg::PrintMode) {
+pub fn print(header: &[String], data: &[Vec<String>], mode: &arg::PrintMode) {
     match mode {
-        arg::PrintMode::Markdown => print::print_markdown_table(data),
+        arg::PrintMode::Markdown => print::print_markdown_table(header, data),
         arg::PrintMode::PlainText => print::print_as_plaintext(data, " "),
     }
 }

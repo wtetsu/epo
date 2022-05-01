@@ -3,7 +3,7 @@ use chrono::{FixedOffset, TimeZone};
 use chrono_tz::Tz;
 use std::io::{stdout, BufWriter, Write};
 
-pub fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones: &Vec<arg::TimeZone>) -> Vec<Vec<String>> {
+pub fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones: &Vec<arg::TimeZone>) -> (Vec<String>, Vec<Vec<String>>) {
     let mut headers: Vec<String> = vec!["Epoch".to_string()];
     for t in timezones {
         match t {
@@ -12,7 +12,7 @@ pub fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones:
         }
     }
 
-    let mut rows: Vec<Vec<String>> = vec![headers];
+    let mut rows: Vec<Vec<String>> = vec![];
 
     for date in epoch_infos {
         let mut row: Vec<String> = vec![date.epoch_sec.to_string()];
@@ -25,10 +25,10 @@ pub fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones:
         }
         rows.push(row);
     }
-    rows
+    (headers, rows)
 }
 
-pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &Vec<arg::TimeZone>) -> Vec<Vec<String>> {
+pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &Vec<arg::TimeZone>) -> (Vec<String>, Vec<Vec<String>>) {
     let mut headers: Vec<String> = vec!["Date".to_string()];
     for t in timezones {
         match t {
@@ -36,7 +36,7 @@ pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &V
             arg::TimeZone::Tzname(tzname) => headers.push(tzname.to_string()),
         }
     }
-    let mut rows: Vec<Vec<String>> = vec![headers];
+    let mut rows: Vec<Vec<String>> = vec![];
 
     for date in date_infos {
         let mut row: Vec<String> = vec![date.date_str.to_string()];
@@ -56,26 +56,28 @@ pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &V
         rows.push(row);
     }
 
-    rows
+    (headers, rows)
 }
 
 #[allow(unused_must_use)]
-pub fn print_markdown_table(data: &Vec<Vec<String>>) {
+pub fn print_markdown_table(header: &[String], data: &[Vec<String>]) {
     let out = stdout();
     let mut buf = BufWriter::new(out.lock());
 
-    let max_lengths = calc_max_column_length(data);
+    let max_lengths = calc_max_column_length(header, data);
 
-    for (i, row) in data.iter().enumerate() {
+    for (i, cell) in header.iter().enumerate() {
+        let width = max_lengths[i];
+        write!(buf, "| {:>width$} ", cell);
+    }
+    writeln!(buf, "|");
+    writeln!(buf, "{}", generate_header_line(&max_lengths));
+    for (_, row) in data.iter().enumerate() {
         for (i, cell) in row.iter().enumerate() {
             let width = max_lengths[i];
             write!(buf, "| {:>width$} ", cell);
         }
         writeln!(buf, "|");
-
-        if i == 0 {
-            writeln!(buf, "{}", generate_header_line(&max_lengths));
-        }
     }
 }
 
@@ -102,12 +104,18 @@ fn generate_header_line(max_lengths: &[usize]) -> String {
         header_line.push_str("-".repeat(*max_length).as_str());
         header_line.push(' ');
     }
-    header_line.push(' ');
+    header_line.push('|');
     header_line
 }
 
-fn calc_max_column_length(data: &Vec<Vec<String>>) -> Vec<usize> {
+fn calc_max_column_length(header: &[String], data: &[Vec<String>]) -> Vec<usize> {
     let mut max_len: Vec<usize> = vec![0; data[0].len()];
+
+    for (i, col) in header.iter().enumerate() {
+        if max_len[i] < col.len() {
+            max_len[i] = col.len();
+        }
+    }
 
     for row in data {
         for (i, col) in row.iter().enumerate() {
@@ -129,7 +137,8 @@ mod tests {
         let epochs: Vec<date::EpochInfo> = Vec::new();
         let timezones: Vec<arg::TimeZone> = Vec::new();
 
-        let r = to_string_rows_from_epochs(&epochs, &timezones);
-        assert_eq!(1, r.len());
+        let (h, d) = to_string_rows_from_epochs(&epochs, &timezones);
+        assert_eq!(1, h.len());
+        assert_eq!(0, d.len());
     }
 }
