@@ -3,7 +3,7 @@ use super::{arg, print};
 pub fn run(settings: &arg::Settings) {
     if !settings.epochs.is_empty() {
         let data = print::to_string_rows_from_epochs(&settings.epochs, &settings.timezones);
-        print::print_markdown_table(&data);
+        print(&data, &settings.print_mode);
     }
 
     if !settings.dates.is_empty() {
@@ -11,7 +11,14 @@ pub fn run(settings: &arg::Settings) {
             println!();
         }
         let data = print::to_string_rows_from_dates(&settings.dates, &settings.timezones);
-        print::print_markdown_table(&data);
+        print(&data, &settings.print_mode);
+    }
+}
+
+pub fn print(data: &Vec<Vec<String>>, mode: &arg::PrintMode) {
+    match mode {
+        arg::PrintMode::Markdown => print::print_markdown_table(data),
+        arg::PrintMode::PlainText => print::print_as_plaintext(data, " "),
     }
 }
 

@@ -79,6 +79,22 @@ pub fn print_markdown_table(data: &Vec<Vec<String>>) {
     }
 }
 
+#[allow(unused_must_use)]
+pub fn print_as_plaintext(data: &[Vec<String>], delimiter: &str) {
+    let out = stdout();
+    let mut buf = BufWriter::new(out.lock());
+
+    for (_, row) in data.iter().enumerate() {
+        for (i, cell) in row.iter().enumerate() {
+            if i > 0 {
+                write!(buf, "{}", delimiter);
+            }
+            write!(buf, "{}", cell);
+        }
+        writeln!(buf);
+    }
+}
+
 fn generate_header_line(max_lengths: &[usize]) -> String {
     let mut header_line = "".to_string();
     for max_length in max_lengths.iter() {
