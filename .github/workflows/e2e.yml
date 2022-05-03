@@ -1,0 +1,20 @@
+name: End to end test
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          cache: "pip"
+      - run: pip install -r tests/requirements.txt
+      - name: Release build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: End to end test
+        run: sh tests/run_all.sh

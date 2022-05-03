@@ -1,19 +1,20 @@
+import os
 import sys
+import json
 import random
 import argparse
 import subprocess
 from datetime import datetime
 from zoneinfo import available_timezones, ZoneInfo
-from typing import Callable
-
-EXCEPT = ["Factory", "Africa/Monrovia"]
+from typing import Callable, Any
 
 
-def main(epo_path: str, repeat: int):
+def main(epo_path: str, repeat: int, timezone_exclusions: set[str]):
     ok_num = 0
     max_epoch = int(datetime.now().timestamp())
 
-    timezones = [t for t in available_timezones() if t not in EXCEPT]
+    timezones = [t for t in available_timezones(
+    ) if t not in timezone_exclusions]
     runner = make_test_runner(epo_path, timezones, max_epoch)
 
     for i in range(1, repeat+1):
@@ -76,10 +77,21 @@ def epoch_to_date_str(epoch: int, tzname: str) -> str:
     return dt.strftime('%Y-%m-%dT%H:%M:%S%z')
 
 
+def load_config(config_path) -> dict[str, Any]:
+    config = None
+    with open(config_path) as file:
+        config = json.load(file)
+
+    return config
+
+
 if __name__ == "__main__":
+    config = load_config(
+        f"{os.path.dirname(sys.argv[0])}/arbitrary_tests.json")
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--epo", default="epo", type=str)
     parser.add_argument("--repeat", default=1000, type=int)
     args = parser.parse_args()
 
-    main(args.epo, args.repeat)
+    main(args.epo, args.repeat, set(config["timezoneExclusions"]))
