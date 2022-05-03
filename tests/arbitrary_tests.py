@@ -87,7 +87,7 @@ def load_config(config_path) -> dict[str, Any]:
 
 if __name__ == "__main__":
     config = load_config(
-        f"{os.path.dirname(sys.argv[0])}/arbitrary_tests.json")
+        f"{os.path.abspath(os.path.dirname(sys.argv[0]))}/arbitrary_tests.json")
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--epo", default="epo", type=str)
