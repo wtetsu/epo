@@ -13,4 +13,4 @@ ut:
 	cargo test
 
 end-to-end-test: release
-	./tests/test_epoch.sh
+	./tests/run_all.sh
