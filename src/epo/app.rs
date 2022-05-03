@@ -45,13 +45,12 @@ mod tests {
     }
 
     #[test]
-    fn test_run_epochs() {
+    fn test_run_epochs_markdown() {
         let settings = arg::Settings {
             timezones: vec![
                 arg::TimeZone::Offset(3600 * 9),
                 arg::TimeZone::Offset(0),
                 arg::TimeZone::Offset(-3600 * 5),
-                //
             ],
             epochs: vec![
                 date::EpochInfo {
@@ -69,6 +68,47 @@ mod tests {
             time_mode: arg::TimeMode::Seconds,
             print_mode: arg::PrintMode::Markdown,
             help: false,
+        };
+        run(&settings);
+    }
+
+    #[test]
+    fn test_run_epochs_plaintext() {
+        let settings = arg::Settings {
+            timezones: vec![
+                arg::TimeZone::Offset(3600 * 9),
+                arg::TimeZone::Offset(0),
+                arg::TimeZone::Offset(-3600 * 5),
+            ],
+            epochs: vec![
+                date::EpochInfo {
+                    epoch_sec: 0,
+                    offset_sec: 0,
+                    date_str: "".to_string(),
+                },
+                date::EpochInfo {
+                    epoch_sec: 1651306548,
+                    offset_sec: 0,
+                    date_str: "".to_string(),
+                },
+            ],
+            dates: vec![],
+            time_mode: arg::TimeMode::Seconds,
+            print_mode: arg::PrintMode::PlainText,
+            help: false,
+        };
+        run(&settings);
+    }
+
+    #[test]
+    fn test_run_help() {
+        let settings = arg::Settings {
+            timezones: vec![],
+            epochs: vec![],
+            dates: vec![],
+            time_mode: arg::TimeMode::Seconds,
+            print_mode: arg::PrintMode::Markdown,
+            help: true,
         };
         run(&settings);
     }
