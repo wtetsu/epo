@@ -5,13 +5,13 @@ use std::collections::HashSet;
 pub struct Settings {
     pub epochs: Vec<date::EpochInfo>,
     pub dates: Vec<date::DateInfo>,
-    pub timezones: Vec<TimeZone>,
+    pub timezones: Vec<Zone>,
     pub time_mode: TimeMode,
     pub print_mode: PrintMode,
     pub help: bool,
 }
 
-pub enum TimeZone {
+pub enum Zone {
     Offset(i32),
     Tzname(String),
 }
@@ -31,7 +31,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
         return Ok(make_default_settings());
     }
 
-    let mut all_timezones: Vec<TimeZone> = Vec::new();
+    let mut all_timezones: Vec<Zone> = Vec::new();
     let mut epochs: Vec<date::EpochInfo> = Vec::new();
     let mut dates: Vec<date::DateInfo> = Vec::new();
     let mut errors: Vec<String> = Vec::new();
@@ -41,12 +41,12 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
 
     for arg in args.iter().skip(1) {
         match parse_arg_value(arg) {
-            ParseArgResult::UtcOffset(offset_secs) => all_timezones.push(TimeZone::Offset(offset_secs)),
+            ParseArgResult::UtcOffset(offset_secs) => all_timezones.push(Zone::Offset(offset_secs)),
             ParseArgResult::EpochInfo(epoch_info) => {
-                all_timezones.push(TimeZone::Offset(epoch_info.offset_sec));
+                all_timezones.push(Zone::Offset(epoch_info.offset_sec));
                 epochs.push(epoch_info);
             }
-            ParseArgResult::Tzname(tzname) => all_timezones.push(TimeZone::Tzname(tzname)),
+            ParseArgResult::Tzname(tzname) => all_timezones.push(Zone::Tzname(tzname)),
             ParseArgResult::Epochs(epoch) => {
                 let offset_sec = date::get_utc_offset_sec();
                 for epoch_sec in epoch {
@@ -71,7 +71,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     }
 
     if all_timezones.is_empty() {
-        all_timezones.push(TimeZone::Offset(date::current_date_info().offset_sec));
+        all_timezones.push(Zone::Offset(date::current_date_info().offset_sec));
     }
     let timezones = unique(all_timezones);
 
@@ -145,21 +145,21 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
     }
 }
 
-fn unique(values: Vec<TimeZone>) -> Vec<TimeZone> {
+fn unique(values: Vec<Zone>) -> Vec<Zone> {
     let mut int_set: HashSet<i32> = HashSet::new();
     let mut string_set: HashSet<String> = HashSet::new();
 
-    let mut result: Vec<TimeZone> = Vec::new();
+    let mut result: Vec<Zone> = Vec::new();
     for v in values {
         match v {
-            TimeZone::Offset(offset_sec) => {
+            Zone::Offset(offset_sec) => {
                 if int_set.insert(offset_sec) {
-                    result.push(TimeZone::Offset(offset_sec));
+                    result.push(Zone::Offset(offset_sec));
                 }
             }
-            TimeZone::Tzname(tzname) => {
+            Zone::Tzname(tzname) => {
                 if string_set.insert(tzname.clone()) {
-                    result.push(TimeZone::Tzname(tzname));
+                    result.push(Zone::Tzname(tzname));
                 }
             }
         }
@@ -170,7 +170,7 @@ fn unique(values: Vec<TimeZone>) -> Vec<TimeZone> {
 fn make_default_settings() -> Settings {
     let now = date::current_date_info();
     Settings {
-        timezones: vec![TimeZone::Offset(now.offset_sec)],
+        timezones: vec![Zone::Offset(now.offset_sec)],
         epochs: vec![now],
         dates: vec![],
         time_mode: TimeMode::Seconds,

@@ -3,7 +3,6 @@ pub fn usage(epoch: i64) -> String {
   let epoch2 = epoch + 86400 * 2;
   format!(
     "Usage: epo [options...]
-  -m Millisecond mode.
   -p Print as plain text.
   -h Display help.
 

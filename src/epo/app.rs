@@ -29,6 +29,7 @@ pub fn print(header: &[String], data: &[Vec<String>], mode: &arg::PrintMode) {
 #[cfg(test)]
 mod tests {
     use super::super::date;
+    use super::arg::Zone;
     use super::*;
 
     #[test]
@@ -48,9 +49,9 @@ mod tests {
     fn test_run_epochs_markdown() {
         let settings = arg::Settings {
             timezones: vec![
-                arg::TimeZone::Offset(3600 * 9),
-                arg::TimeZone::Offset(0),
-                arg::TimeZone::Offset(-3600 * 5),
+                Zone::Offset(3600 * 9),
+                Zone::Offset(0),
+                Zone::Offset(-3600 * 5), //
             ],
             epochs: vec![
                 date::EpochInfo {
@@ -76,9 +77,10 @@ mod tests {
     fn test_run_epochs_plaintext() {
         let settings = arg::Settings {
             timezones: vec![
-                arg::TimeZone::Offset(3600 * 9),
-                arg::TimeZone::Offset(0),
-                arg::TimeZone::Offset(-3600 * 5),
+                Zone::Offset(3600 * 9),
+                Zone::Offset(0),
+                Zone::Offset(-3600 * 5),
+                //
             ],
             epochs: vec![
                 date::EpochInfo {
