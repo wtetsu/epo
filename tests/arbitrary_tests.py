@@ -67,12 +67,12 @@ def run_epo(epo_path: str, epochs: list[int], timezones: list[str]) -> str:
 def generate_cross_check_data(epochs: list[int], timezones: list[str]) -> str:
     result = ""
     for e in epochs:
-        dates = [epoch_to_date_str(e, tz) for tz in timezones]
+        dates = [epoch_to_datestr(e, tz) for tz in timezones]
         result += " ".join([str(e), *dates]) + "\n"
     return result
 
 
-def epoch_to_date_str(epoch: int, tzname: str) -> str:
+def epoch_to_datestr(epoch: int, tzname: str) -> str:
     dt = datetime.fromtimestamp(epoch, tz=ZoneInfo(tzname))
     return dt.strftime('%Y-%m-%dT%H:%M:%S%z')
 
