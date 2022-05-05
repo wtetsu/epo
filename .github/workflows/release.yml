@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Release
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            artifact_name: epo
+            asset_name: epo_linux_${GITHUB_REF##*/}
+          - os: ubuntu-latest
+            target: x86_64-pc-windows-gnu
+            artifact_name: epo.exe
+            asset_name: epo_windows_${GITHUB_REF##*/}
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: epo
+            asset_name: epo_macos_amd_${GITHUB_REF##*/}
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --release --target ${{ matrix.target }} --all-features --verbose
+
+      # - name: Upload binaries
+      #   uses: svenstaro/upload-release-action@v2
+      #   with:
+      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
+      #     file: target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+      #     asset_name: ${{ matrix.asset_name }}
+      #     tag: ${{ github.ref }}
+      #     overwrite: true
+
+      - name: Packaging
+        env:
+          DIR:
+        run: |
+          mkdir ${{ matrix.asset_name }}
+          cp target/${{ matrix.target }}/release/${{ matrix.artifact_name }} ${{ matrix.asset_name }}
+          cp README.md LICENSE  ${{ matrix.asset_name }}
+          zip -r ${{ matrix.asset_name }}.zip ./${{ matrix.asset_name }}
+      - name: Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          files: epo_*.zip
