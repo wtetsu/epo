@@ -3,8 +3,9 @@ use std::process::exit;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    match epo::arg::parse_arguments(&args) {
-        Ok(settings) => epo::app::run(&settings),
+    let parse_settings = epo::arg::get_parse_settings();
+    match epo::arg::parse_arguments(&args, &parse_settings) {
+        Ok(app_settings) => epo::app::run(&app_settings),
         Err(errors) => {
             print_errors(&errors);
             exit(1);

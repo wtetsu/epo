@@ -13,6 +13,12 @@ pub struct DateInfo {
     pub date_str: String,
 }
 
+pub struct ParseSettings {
+    pub date_formats_10: Vec<String>,
+    pub date_formats_19: Vec<String>,
+    pub date_formats_23: Vec<String>,
+}
+
 pub fn to_date_str(epoch_sec: i64, offset_sec: i32) -> String {
     let dt = Utc.timestamp(epoch_sec, 0).with_timezone(&FixedOffset::east(offset_sec));
 
@@ -54,21 +60,36 @@ pub fn parse_date_with_offset_str(date_str: &str) -> Result<EpochInfo, String> {
     Err("Parse error".to_string())
 }
 
-pub fn parse_naive_date_str(date_str: &str) -> Result<DateInfo, String> {
-    let formats_without_offset = vec!["%Y-%m-%dT%H:%M:%S", "%Y/%m/%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S"];
-    let formats_without_time = vec!["%Y-%m-%d", "%Y/%m/%d"];
+pub fn parse_naive_date_str(date_str: &str, parse_config: &ParseSettings) -> Result<DateInfo, String> {
+    let formats = match date_str.len() {
+        10 => &parse_config.date_formats_10,
+        19 => &parse_config.date_formats_19,
+        23 => &parse_config.date_formats_23,
+        _ => return Err("Parse error".to_string()),
+    };
 
-    for format in formats_without_offset {
-        if let Ok(date_time) = NaiveDateTime::parse_from_str(date_str, format) {
+    for format in formats {
+        if let Ok(date_time) = parse_date_str(date_str, format) {
+            return Ok(date_time);
+        }
+    }
+
+    Err("Parse error".to_string())
+}
+
+fn parse_date_str(date_str: &str, format: &str) -> Result<DateInfo, String> {
+    if date_str.len() <= 10 {
+        if let Ok(date) = NaiveDate::parse_from_str(date_str, format) {
+            let date_time = date.and_hms(0, 0, 0);
             return Ok(DateInfo {
                 date_time,
                 date_str: date_str.to_string(),
             });
         }
     }
-    for format in formats_without_time {
-        if let Ok(date) = NaiveDate::parse_from_str(date_str, format) {
-            let date_time = date.and_hms(0, 0, 0);
+
+    if date_str.len() >= 19 {
+        if let Ok(date_time) = NaiveDateTime::parse_from_str(date_str, format) {
             return Ok(DateInfo {
                 date_time,
                 date_str: date_str.to_string(),

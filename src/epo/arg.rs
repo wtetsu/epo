@@ -1,32 +1,51 @@
+use super::types::{PrintMode, Settings, TimeMode, Zone};
 use super::{date, script, tz};
 use chrono_tz::Tz;
 use std::collections::HashSet;
 
-pub struct Settings {
-    pub epochs: Vec<date::EpochInfo>,
-    pub dates: Vec<date::DateInfo>,
-    pub timezones: Vec<Zone>,
-    pub time_mode: TimeMode,
-    pub print_mode: PrintMode,
-    pub help: bool,
-}
-
-pub enum Zone {
-    Offset(i32),
+enum ParseArgResult {
+    EpochInfo(date::EpochInfo),
+    Epochs(Vec<i64>),
+    DateInfo(date::DateInfo),
+    UtcOffset(i32),
     Tzname(String),
+    Error(String),
+    TimeMode(TimeMode),
+    PrintMode(PrintMode),
+    Help(bool),
 }
 
-pub enum TimeMode {
-    Seconds,
-    Milliseconds,
+pub fn get_parse_settings() -> date::ParseSettings {
+    let date_formats_10: Vec<String> = vec![
+        "%Y-%m-%d".to_string(),
+        "%Y/%m/%d".to_string(),
+        //
+    ];
+    let date_formats_19: Vec<String> = vec![
+        "%Y-%m-%dT%H:%M:%S".to_string(),
+        "%Y/%m/%dT%H:%M:%S".to_string(),
+        "%Y-%m-%d %H:%M:%S".to_string(),
+        "%Y/%m/%d %H:%M:%S".to_string(),
+    ];
+    let date_formats_23: Vec<String> = vec![
+        "%Y-%m-%dT%H:%M:%S.%3f".to_string(),
+        "%Y/%m/%dT%H:%M:%S.%3f".to_string(),
+        "%Y-%m-%d %H:%M:%S.%3f".to_string(),
+        "%Y/%m/%d %H:%M:%S.%3f".to_string(),
+        "%Y-%m-%dT%H:%M:%S,%3f".to_string(),
+        "%Y/%m/%dT%H:%M:%S,%3f".to_string(),
+        "%Y-%m-%d %H:%M:%S,%3f".to_string(),
+        "%Y/%m/%d %H:%M:%S,%3f".to_string(),
+    ];
+
+    date::ParseSettings {
+        date_formats_10,
+        date_formats_19,
+        date_formats_23,
+    }
 }
 
-pub enum PrintMode {
-    Markdown,
-    PlainText,
-}
-
-pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
+pub fn parse_arguments(args: &[String], parse_settings: &date::ParseSettings) -> Result<Settings, Vec<String>> {
     if args.len() <= 1 {
         return Ok(make_default_settings());
     }
@@ -40,7 +59,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     let mut help = false;
 
     for arg in args.iter().skip(1) {
-        match parse_arg_value(arg) {
+        match parse_arg_value(arg, parse_settings) {
             ParseArgResult::UtcOffset(offset_secs) => all_timezones.push(Zone::Offset(offset_secs)),
             ParseArgResult::EpochInfo(epoch_info) => {
                 all_timezones.push(Zone::Offset(epoch_info.offset_sec));
@@ -89,19 +108,7 @@ pub fn parse_arguments(args: &[String]) -> Result<Settings, Vec<String>> {
     })
 }
 
-enum ParseArgResult {
-    EpochInfo(date::EpochInfo),
-    Epochs(Vec<i64>),
-    DateInfo(date::DateInfo),
-    UtcOffset(i32),
-    Tzname(String),
-    Error(String),
-    TimeMode(TimeMode),
-    PrintMode(PrintMode),
-    Help(bool),
-}
-
-fn parse_arg_value(arg: &str) -> ParseArgResult {
+fn parse_arg_value(arg: &str, parse_settings: &date::ParseSettings) -> ParseArgResult {
     if arg.len() >= 2 && (arg.starts_with('+') || arg.starts_with('-')) {
         if let Ok(offset_sec) = date::parse_offset_str(arg) {
             return ParseArgResult::UtcOffset(offset_sec);
@@ -121,7 +128,7 @@ fn parse_arg_value(arg: &str) -> ParseArgResult {
     }
 
     // Date without offset
-    if let Ok(dt) = date::parse_naive_date_str(arg) {
+    if let Ok(dt) = date::parse_naive_date_str(arg, parse_settings) {
         return ParseArgResult::DateInfo(dt);
     }
 
@@ -195,7 +202,7 @@ mod tests {
         ];
 
         for (arg, expected) in test_data {
-            let r = parse_arg_value(arg);
+            let r = parse_arg_value(arg, &get_parse_settings());
             match r {
                 ParseArgResult::UtcOffset(offset) => assert_eq!(offset, expected),
                 _ => unreachable!(),
@@ -212,7 +219,7 @@ mod tests {
         ];
 
         for (arg, expected_epoch) in test_data {
-            let r = parse_arg_value(arg);
+            let r = parse_arg_value(arg, &get_parse_settings());
             match r {
                 ParseArgResult::EpochInfo(date) => {
                     assert_eq!(expected_epoch, date.epoch_sec);
@@ -227,7 +234,7 @@ mod tests {
         let test_data: Vec<&str> = vec!["+", "-", "x", "", "1x", "1.0.0"];
 
         for arg in test_data {
-            let r = parse_arg_value(arg);
+            let r = parse_arg_value(arg, &get_parse_settings());
 
             if let ParseArgResult::Error(_) = r {
                 continue;
@@ -238,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_parse_arguments_default() {
-        let actual = parse_arguments(&[]).unwrap();
+        let actual = parse_arguments(&[], &get_parse_settings()).unwrap();
         let now = date::current_date_info();
 
         assert_eq!(0, actual.dates.len());
@@ -249,15 +256,18 @@ mod tests {
 
     #[test]
     fn test_parse_arguments() {
-        let actual = parse_arguments(&[
-            String::from("dummy"),
-            String::from("2022-04-01"),
-            String::from("0"),
-            String::from("+9"),
-            String::from("-5"),
-            String::from("tokyo"),
-            String::from("new_y"),
-        ])
+        let actual = parse_arguments(
+            &[
+                "dummy".to_string(),
+                "2022-04-01".to_string(),
+                "0".to_string(),
+                "+9".to_string(),
+                "-5".to_string(),
+                "tokyo".to_string(),
+                "new_y".to_string(),
+            ],
+            &get_parse_settings(),
+        )
         .unwrap();
 
         assert_eq!(1, actual.dates.len());

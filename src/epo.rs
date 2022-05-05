@@ -4,4 +4,5 @@ pub mod date;
 pub mod help;
 pub mod print;
 pub mod script;
+pub mod types;
 pub mod tz;
