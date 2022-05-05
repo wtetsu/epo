@@ -269,18 +269,49 @@ mod tests {
             &[
                 "dummy".to_string(),
                 "2022-04-01".to_string(),
+                "2022-04-01T12:23".to_string(),
+                "2022-04-01T12:23:34".to_string(),
+                "2022-04-01T12:23:34.567".to_string(),
+                "2022-04-01T12:23+0000".to_string(),
+                "2022-04-01T12:23:34+0900".to_string(),
                 "0".to_string(),
+                "[1651789910,1651789910+86400]".to_string(),
                 "+9".to_string(),
                 "-5".to_string(),
                 "tokyo".to_string(),
                 "new_y".to_string(),
+                "America/Los_Angeles".to_string(),
             ],
             &get_parse_settings(),
         )
         .unwrap();
 
-        assert_eq!(1, actual.dates.len());
-        assert_eq!(4, actual.timezones.len());
+        assert_eq!(4, actual.dates.len());
+        assert_eq!(6, actual.timezones.len());
+        assert_eq!(5, actual.epochs.len());
+    }
+
+    #[test]
+    fn test_parse_arguments_global_options() {
+        let actual = parse_arguments(
+            &[
+                "dummy".to_string(),
+                "-h".to_string(),
+                "-p".to_string(),
+                //
+            ],
+            &get_parse_settings(),
+        )
+        .unwrap();
+
+        match actual.print_mode {
+            PrintMode::PlainText => (),
+            _ => unreachable!(),
+        }
+
+        assert!(actual.help);
+        assert_eq!(0, actual.dates.len());
+        assert_eq!(1, actual.timezones.len());
         assert_eq!(1, actual.epochs.len());
     }
 }

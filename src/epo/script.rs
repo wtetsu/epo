@@ -1,19 +1,36 @@
 use super::date;
 use boa_engine::object::JsObject;
-use boa_engine::property::Attribute;
-use boa_engine::property::PropertyKey;
-use boa_engine::Context;
-use boa_engine::JsValue;
+use boa_engine::property::{Attribute, PropertyKey};
+use boa_engine::{Context, JsValue};
 
 const MAX_EPOCH: i64 = 8210298412799 - 86400;
 const MIN_EPOCH: i64 = -MAX_EPOCH;
+
+const DEFINE_FUNCTIONS: &str = "
+const range = (start, end) => {
+  let s, e;
+  if (end === undefined) {
+    s = 0;
+    e = start;
+  } else {
+    s = start;
+    e = end;
+  }
+  const r = [];
+  const inc = s < e ? 1 : -1;
+  while (s !== e) {
+    r.push(s);
+    s += inc;
+  }
+  return r;
+};
+";
 
 pub fn eval(js_code: &str) -> Result<Vec<i64>, String> {
     let mut context = Context::default();
 
     context.register_global_property("now", date::current_epoch(), Attribute::all());
-
-    let r = context.eval(js_code);
+    let r = context.eval(format!("{}{}", DEFINE_FUNCTIONS, js_code).as_str());
 
     match r {
         Ok(js_value) => match &js_value {
@@ -118,6 +135,29 @@ mod tests {
             vec!(1651256673, 1651256674, 1651256675, 1651256676, 1651256677),
             eval("[...Array(5).keys()].map(a=>1651256673+a)").unwrap()
         );
+    }
+
+    #[test]
+    fn test_range() {
+        assert_eq!(
+            vec!(1651256673, 1651256674, 1651256675),
+            eval("range(0, 3).map(a=>1651256673+a)").unwrap()
+        );
+        assert_eq!(
+            vec!(1651256673, 1651256674, 1651256675),
+            eval("range(3).map(a=>1651256673+a)").unwrap()
+        );
+        assert_eq!(
+            vec!(1651256673, 1651256672, 1651256671),
+            eval("range(0, -3).map(a=>1651256673+a)").unwrap()
+        );
+        assert_eq!(
+            vec!(1651256673, 1651256672, 1651256671),
+            eval("range(-3).map(a=>1651256673+a)").unwrap()
+        );
+
+        assert_eq!(0_usize, eval("range(100, 100).map(a=>1651256673+a)").unwrap().len());
+        assert_eq!(0_usize, eval("range(-100, -100).map(a=>1651256673+a)").unwrap().len());
     }
 
     #[test]
