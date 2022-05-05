@@ -2,6 +2,10 @@
 name = "epo"
 version = "0.1.0"
 edition = "2021"
+categories = ["command-line-utilities"]
+description = "Handy epoch converter."
+homepage = "https://github.com/wtetsu/epo"
+license = "MIT"
 
 [dependencies]
 chrono = "0.4.19"
