@@ -179,7 +179,7 @@ checksum = "21e50f3adc76d6a43f5ed73b698a87d0760ca74617f60f7c3b879003536fdd28"
 
 [[package]]
 name = "epo"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "Boa",
  "boa_engine",
