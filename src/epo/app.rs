@@ -58,12 +58,12 @@ mod tests {
                 date::EpochInfo {
                     epoch_sec: 0,
                     offset_sec: 0,
-                    date_str: "".to_string(),
+                    datestr: "".to_string(),
                 },
                 date::EpochInfo {
                     epoch_sec: 1651306548,
                     offset_sec: 0,
-                    date_str: "".to_string(),
+                    datestr: "".to_string(),
                 },
             ],
             dates: vec![],
@@ -87,12 +87,12 @@ mod tests {
                 date::EpochInfo {
                     epoch_sec: 0,
                     offset_sec: 0,
-                    date_str: "".to_string(),
+                    datestr: "".to_string(),
                 },
                 date::EpochInfo {
                     epoch_sec: 1651306548,
                     offset_sec: 0,
-                    date_str: "".to_string(),
+                    datestr: "".to_string(),
                 },
             ],
             dates: vec![],

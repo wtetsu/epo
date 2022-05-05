@@ -19,8 +19,8 @@ pub fn to_string_rows_from_epochs(epoch_infos: &Vec<date::EpochInfo>, timezones:
         let mut row: Vec<String> = vec![date.epoch_sec.to_string()];
         for t in timezones {
             let s = match t {
-                Zone::Offset(offset_sec) => date::to_date_str(date.epoch_sec, *offset_sec),
-                Zone::Tzname(tzname) => date::to_date_str_with_tz(date.epoch_sec, tzname),
+                Zone::Offset(offset_sec) => date::to_datestr(date.epoch_sec, *offset_sec),
+                Zone::Tzname(tzname) => date::to_datestr_with_tz(date.epoch_sec, tzname),
             };
             row.push(s);
         }
@@ -40,7 +40,7 @@ pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &V
     let mut rows: Vec<Vec<String>> = vec![];
 
     for date in date_infos {
-        let mut row: Vec<String> = vec![date.date_str.to_string()];
+        let mut row: Vec<String> = vec![date.datestr.to_string()];
         for t in timezones {
             match t {
                 Zone::Offset(offset_sec) => {

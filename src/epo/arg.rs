@@ -21,6 +21,14 @@ pub fn get_parse_settings() -> date::ParseSettings {
         "%Y/%m/%d".to_string(),
         //
     ];
+
+    let date_formats_16: Vec<String> = vec![
+        "%Y-%m-%dT%H:%M".to_string(),
+        "%Y/%m/%dT%H:%M".to_string(),
+        "%Y-%m-%d %H:%M".to_string(),
+        "%Y/%m/%d %H:%M".to_string(),
+    ];
+
     let date_formats_19: Vec<String> = vec![
         "%Y-%m-%dT%H:%M:%S".to_string(),
         "%Y/%m/%dT%H:%M:%S".to_string(),
@@ -40,6 +48,7 @@ pub fn get_parse_settings() -> date::ParseSettings {
 
     date::ParseSettings {
         date_formats_10,
+        date_formats_16,
         date_formats_19,
         date_formats_23,
     }
@@ -69,11 +78,11 @@ pub fn parse_arguments(args: &[String], parse_settings: &date::ParseSettings) ->
             ParseArgResult::Epochs(epoch) => {
                 let offset_sec = date::get_utc_offset_sec();
                 for epoch_sec in epoch {
-                    let date_str = arg.to_string();
+                    let datestr = arg.to_string();
                     epochs.push(date::EpochInfo {
                         epoch_sec,
                         offset_sec,
-                        date_str,
+                        datestr,
                     });
                 }
             }
@@ -123,12 +132,12 @@ fn parse_arg_value(arg: &str, parse_settings: &date::ParseSettings) -> ParseArgR
     }
 
     // Date with offset
-    if let Ok(dt) = date::parse_date_with_offset_str(arg) {
+    if let Ok(dt) = date::parse_datestr_with_offset(arg, parse_settings) {
         return ParseArgResult::EpochInfo(dt);
     }
 
     // Date without offset
-    if let Ok(dt) = date::parse_naive_date_str(arg, parse_settings) {
+    if let Ok(dt) = date::parse_naive_datestr(arg, parse_settings) {
         return ParseArgResult::DateInfo(dt);
     }
 

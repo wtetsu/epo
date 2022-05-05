@@ -5,94 +5,107 @@ use once_cell::sync::Lazy;
 pub struct EpochInfo {
     pub epoch_sec: i64,
     pub offset_sec: i32,
-    pub date_str: String,
+    pub datestr: String,
 }
 
 pub struct DateInfo {
     pub date_time: NaiveDateTime,
-    pub date_str: String,
+    pub datestr: String,
 }
 
 pub struct ParseSettings {
     pub date_formats_10: Vec<String>,
+    pub date_formats_16: Vec<String>,
     pub date_formats_19: Vec<String>,
     pub date_formats_23: Vec<String>,
 }
 
-pub fn to_date_str(epoch_sec: i64, offset_sec: i32) -> String {
+pub fn to_datestr(epoch_sec: i64, offset_sec: i32) -> String {
     let dt = Utc.timestamp(epoch_sec, 0).with_timezone(&FixedOffset::east(offset_sec));
 
     dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
 }
 
-pub fn to_date_str_with_tz(epoch_sec: i64, timezone: &str) -> String {
+pub fn to_datestr_with_tz(epoch_sec: i64, timezone: &str) -> String {
     let tz: Tz = timezone.parse().unwrap();
     let dt = tz.timestamp(epoch_sec, 0);
     dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
 }
 
-pub fn parse_date_with_offset_str(date_str: &str) -> Result<EpochInfo, String> {
-    let formats = vec![
-        "%Y-%m-%dT%H:%M:%S%z",
-        "%Y/%m/%dT%H:%M:%S%z",
-        "%Y-%m-%d %H:%M:%S%z",
-        "%Y/%m/%d %H:%M:%S%z",
-    ];
+pub fn parse_datestr_with_offset(datestr: &str, parse_settings: &ParseSettings) -> Result<EpochInfo, String> {
+    if datestr.ends_with('Z') {
+        if let Ok(epoch_info) = parse_naive_datestr(&datestr[0..datestr.len() - 1], parse_settings) {
+            return Ok(EpochInfo {
+                epoch_sec: epoch_info.date_time.timestamp(),
+                offset_sec: 0,
+                datestr: epoch_info.datestr,
+            });
+        }
+        return Err("Parse error".to_string());
+    }
+
+    let formats = match datestr.len() {
+        15 | 16 => &parse_settings.date_formats_10,
+        21 | 22 => &parse_settings.date_formats_16,
+        24 | 25 => &parse_settings.date_formats_19,
+        28 | 29 => &parse_settings.date_formats_23,
+        _ => return Err("Parse error".to_string()),
+    };
 
     for format in formats {
-        if let Ok(dt) = DateTime::parse_from_str(date_str, format) {
+        if let Ok(dt) = DateTime::parse_from_str(datestr, &format!("{}%z", format)) {
             return Ok(EpochInfo {
                 epoch_sec: dt.timestamp(),
                 offset_sec: dt.offset().local_minus_utc(),
-                date_str: date_str.to_string(),
+                datestr: datestr.to_string(),
             });
         }
     }
 
-    if let Ok(dt) = DateTime::parse_from_rfc2822(date_str) {
+    if let Ok(dt) = DateTime::parse_from_rfc2822(datestr) {
         return Ok(EpochInfo {
             epoch_sec: dt.timestamp(),
             offset_sec: 0,
-            date_str: date_str.to_string(),
+            datestr: datestr.to_string(),
         });
     }
 
     Err("Parse error".to_string())
 }
 
-pub fn parse_naive_date_str(date_str: &str, parse_config: &ParseSettings) -> Result<DateInfo, String> {
-    let formats = match date_str.len() {
-        10 => &parse_config.date_formats_10,
-        19 => &parse_config.date_formats_19,
-        23 => &parse_config.date_formats_23,
+pub fn parse_naive_datestr(datestr: &str, parse_settings: &ParseSettings) -> Result<DateInfo, String> {
+    let formats = match datestr.len() {
+        10 => &parse_settings.date_formats_10,
+        16 => &parse_settings.date_formats_16,
+        19 => &parse_settings.date_formats_19,
+        23 => &parse_settings.date_formats_23,
         _ => return Err("Parse error".to_string()),
     };
 
     for format in formats {
-        if let Ok(date_time) = parse_date_str(date_str, format) {
+        if let Ok(date_time) = parse_datestr(datestr, format) {
             return Ok(date_time);
         }
     }
-
     Err("Parse error".to_string())
 }
 
-fn parse_date_str(date_str: &str, format: &str) -> Result<DateInfo, String> {
-    if date_str.len() <= 10 {
-        if let Ok(date) = NaiveDate::parse_from_str(date_str, format) {
+fn parse_datestr(datestr: &str, format: &str) -> Result<DateInfo, String> {
+    if datestr.len() <= 10 {
+        if let Ok(date) = NaiveDate::parse_from_str(datestr, format) {
             let date_time = date.and_hms(0, 0, 0);
             return Ok(DateInfo {
                 date_time,
-                date_str: date_str.to_string(),
+                datestr: datestr.to_string(),
             });
         }
     }
 
-    if date_str.len() >= 19 {
-        if let Ok(date_time) = NaiveDateTime::parse_from_str(date_str, format) {
+    if datestr.len() >= 16 {
+        if let Ok(date_time) = NaiveDateTime::parse_from_str(datestr, format) {
             return Ok(DateInfo {
                 date_time,
-                date_str: date_str.to_string(),
+                datestr: datestr.to_string(),
             });
         }
     }
@@ -117,12 +130,12 @@ pub fn get_utc_offset_sec() -> i32 {
 fn to_date_value(time: DateTime<Local>) -> EpochInfo {
     let epoch_sec = time.timestamp();
     let offset_sec = time.date().offset().local_minus_utc();
-    let date_str = to_date_str(epoch_sec, offset_sec / 3600);
+    let datestr = to_datestr(epoch_sec, offset_sec / 3600);
 
     EpochInfo {
         epoch_sec,
         offset_sec,
-        date_str,
+        datestr,
     }
 }
 
@@ -178,47 +191,89 @@ fn parse_hours_offset_str(offset_str: &str) -> Result<i32, String> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::arg::get_parse_settings;
     use super::*;
 
     #[test]
-    fn test_to_date_str() {
-        assert_eq!("1970-01-01T00:00:00+0000", to_date_str(0, 0));
-        assert_eq!("1970-01-01T09:00:00+0900", to_date_str(0, 32400));
-        assert_eq!("2022-04-17T21:09:49+0900", to_date_str(1650197389, 32400));
-        assert_eq!("2022-04-17T12:09:49+0000", to_date_str(1650197389, 0));
-        assert_eq!("2022-04-17T07:09:49-0500", to_date_str(1650197389, -18000));
+    fn test_to_datestr() {
+        assert_eq!("1970-01-01T00:00:00+0000", to_datestr(0, 0));
+        assert_eq!("1970-01-01T09:00:00+0900", to_datestr(0, 32400));
+        assert_eq!("2022-04-17T21:09:49+0900", to_datestr(1650197389, 32400));
+        assert_eq!("2022-04-17T12:09:49+0000", to_datestr(1650197389, 0));
+        assert_eq!("2022-04-17T07:09:49-0500", to_datestr(1650197389, -18000));
     }
 
     #[test]
-    fn test_parse_date_with_offset_str() {
-        assert_date(0, 0, parse_date_with_offset_str("1970-01-01T00:00:00+0000").unwrap());
-        assert_date(3600 * 9, 0, parse_date_with_offset_str("1970-01-01T09:00:00+0000").unwrap());
-        assert_date(0, 32400, parse_date_with_offset_str("1970-01-01T09:00:00+0900").unwrap());
-        assert_date(0, 0, parse_date_with_offset_str("1970/01/01T00:00:00+0000").unwrap());
-        assert_date(32400, 0, parse_date_with_offset_str("1970/01/01T09:00:00+0000").unwrap());
-        assert_date(0, 32400, parse_date_with_offset_str("1970/01/01T09:00:00+0900").unwrap());
+    fn test_parse_date_with_offset_str1() {
+        let s = get_parse_settings();
+        assert_date(0, 0, parse_datestr_with_offset("1970-01-01T00:00:00+0000", &s).unwrap());
+        assert_date(3600 * 9, 0, parse_datestr_with_offset("1970-01-01T09:00:00+0000", &s).unwrap());
+        assert_date(0, 32400, parse_datestr_with_offset("1970-01-01T09:00:00+0900", &s).unwrap());
+        assert_date(0, 0, parse_datestr_with_offset("1970/01/01T00:00:00+0000", &s).unwrap());
+        assert_date(32400, 0, parse_datestr_with_offset("1970/01/01T09:00:00+0000", &s).unwrap());
+        assert_date(0, 32400, parse_datestr_with_offset("1970/01/01T09:00:00+0900", &s).unwrap());
     }
 
     #[test]
-    fn test_to_date_str2() {
-        assert_eq!("1970-01-01T00:00:00+0000", to_date_str_with_tz(0, "UTC"));
-        assert_eq!("1970-01-01T00:00:00+0000", to_date_str_with_tz(0, "GMT"));
-        assert_eq!("1970-01-01T09:00:00+0900", to_date_str_with_tz(0, "Asia/Tokyo"));
+    fn test_parse_date_with_offset_str2() {
+        let s = get_parse_settings();
 
-        assert_eq!("2022-04-17T21:09:49+0900", to_date_str_with_tz(1650197389, "Asia/Tokyo"));
-        assert_eq!("2022-04-17T12:09:49+0000", to_date_str_with_tz(1650197389, "UTC"));
-        assert_eq!("2022-04-17T08:09:49-0400", to_date_str_with_tz(1650197389, "America/New_York"));
-        assert_eq!("2022-04-17T05:09:49-0700", to_date_str_with_tz(1650197389, "America/Phoenix"));
+        let datestrs = vec![
+            "1970-01-01T00:00+0000",
+            "1970-01-01T00:00+00:00",
+            "1970-01-01T00:00:00+0000",
+            "1970-01-01T00:00:00+00:00",
+            "1970-01-01T09:00+0900",
+            "1970-01-01T09:00+09:00",
+            "1970-01-01T09:00:00+0900",
+            "1970-01-01T09:00:00+09:00",
+            "1970-01-01T05:00+0500",
+            "1970-01-01T05:00+05:00",
+            "1970-01-01T05:00:00+0500",
+            "1970-01-01T05:00:00+05:00",
+            "1969-12-31T23:00-0100",
+            "1969-12-31T23:00-01:00",
+            "1969-12-31T23:00:00-0100",
+            "1969-12-31T23:00:00-01:00",
+            "1969-12-31T20:00-0400",
+            "1969-12-31T20:00-04:00",
+            "1969-12-31T20:00:00-0400",
+            "1969-12-31T20:00:00-04:00",
+            "1969-12-31T10:00-1400",
+            "1969-12-31T10:00-14:00",
+            "1969-12-31T10:00:00-1400",
+            "1969-12-31T10:00:00-14:00",
+            "1970-01-01T00:00Z",
+            "1970-01-01T00:00:00Z",
+            "1970-01-01T00:00:00.000Z",
+        ];
 
-        assert_eq!("2022-01-01T02:30:40+0900", to_date_str_with_tz(1640971840, "Asia/Tokyo"));
-        assert_eq!("2021-12-31T17:30:40+0000", to_date_str_with_tz(1640971840, "UTC"));
-        assert_eq!("2021-12-31T12:30:40-0500", to_date_str_with_tz(1640971840, "America/New_York"));
-        assert_eq!("2021-12-31T10:30:40-0700", to_date_str_with_tz(1640971840, "America/Phoenix"));
+        for d in datestrs {
+            assert_eq!(0, parse_datestr_with_offset(d, &s).unwrap().epoch_sec);
+            assert_eq!(0, parse_datestr_with_offset(&d.replace('T', " "), &s).unwrap().epoch_sec);
+        }
+    }
+
+    #[test]
+    fn test_to_datestr2() {
+        assert_eq!("1970-01-01T00:00:00+0000", to_datestr_with_tz(0, "UTC"));
+        assert_eq!("1970-01-01T00:00:00+0000", to_datestr_with_tz(0, "GMT"));
+        assert_eq!("1970-01-01T09:00:00+0900", to_datestr_with_tz(0, "Asia/Tokyo"));
+
+        assert_eq!("2022-04-17T21:09:49+0900", to_datestr_with_tz(1650197389, "Asia/Tokyo"));
+        assert_eq!("2022-04-17T12:09:49+0000", to_datestr_with_tz(1650197389, "UTC"));
+        assert_eq!("2022-04-17T08:09:49-0400", to_datestr_with_tz(1650197389, "America/New_York"));
+        assert_eq!("2022-04-17T05:09:49-0700", to_datestr_with_tz(1650197389, "America/Phoenix"));
+
+        assert_eq!("2022-01-01T02:30:40+0900", to_datestr_with_tz(1640971840, "Asia/Tokyo"));
+        assert_eq!("2021-12-31T17:30:40+0000", to_datestr_with_tz(1640971840, "UTC"));
+        assert_eq!("2021-12-31T12:30:40-0500", to_datestr_with_tz(1640971840, "America/New_York"));
+        assert_eq!("2021-12-31T10:30:40-0700", to_datestr_with_tz(1640971840, "America/Phoenix"));
     }
     #[test]
     fn test_to_date_value() {
         let dt: Result<DateTime<Local>, _> = Local.datetime_from_str("2023/12/07 22:45:56", "%Y/%m/%d %H:%M:%S");
-        assert!(to_date_value(dt.unwrap()).date_str.ends_with("+0000"));
+        assert!(to_date_value(dt.unwrap()).datestr.ends_with("+0000"));
     }
 
     fn assert_date(epoch_sec: i64, offset: i32, date_value: EpochInfo) {
