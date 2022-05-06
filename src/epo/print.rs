@@ -40,7 +40,7 @@ pub fn to_string_rows_from_dates(date_infos: &Vec<date::DateInfo>, timezones: &V
     let mut rows: Vec<Vec<String>> = vec![];
 
     for date in date_infos {
-        let mut row: Vec<String> = vec![date.datestr.to_string()];
+        let mut row: Vec<String> = vec![date::to_datestr_from_ndt(date.date_time)];
         for t in timezones {
             match t {
                 Zone::Offset(offset_sec) => {

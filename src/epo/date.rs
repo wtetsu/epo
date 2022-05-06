@@ -20,16 +20,23 @@ pub struct ParseSettings {
     pub date_formats_23: Vec<String>,
 }
 
+const DEFAULT_DATE_FORMAT: &str = "%Y-%m-%dT%H:%M:%S";
+const DEFAULT_DATE_FORMAT_WITH_TZ: &str = "%Y-%m-%dT%H:%M:%S%z";
+
+pub fn to_datestr_from_ndt(dt: NaiveDateTime) -> String {
+    dt.format(DEFAULT_DATE_FORMAT).to_string()
+}
+
 pub fn to_datestr(epoch_sec: i64, offset_sec: i32) -> String {
     let dt = Utc.timestamp(epoch_sec, 0).with_timezone(&FixedOffset::east(offset_sec));
 
-    dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
+    dt.format(DEFAULT_DATE_FORMAT_WITH_TZ).to_string()
 }
 
 pub fn to_datestr_with_tz(epoch_sec: i64, timezone: &str) -> String {
     let tz: Tz = timezone.parse().unwrap();
     let dt = tz.timestamp(epoch_sec, 0);
-    dt.format("%Y-%m-%dT%H:%M:%S%z").to_string()
+    dt.format(DEFAULT_DATE_FORMAT_WITH_TZ).to_string()
 }
 
 pub fn parse_datestr_with_offset(datestr: &str, parse_settings: &ParseSettings) -> Result<EpochInfo, String> {
