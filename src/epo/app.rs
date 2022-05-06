@@ -2,10 +2,16 @@ use super::types::{PrintMode, Settings};
 use super::{date, help, print};
 
 pub fn run(settings: &Settings) {
-    if settings.help {
-        println!("{}", help::usage(date::current_epoch()));
+    if settings.help || settings.version {
+        if settings.version {
+            println!("{}", help::version());
+        }
+        if settings.help {
+            println!("{}", help::usage(date::current_epoch()));
+        }
         return;
     }
+
     if !settings.epochs.is_empty() {
         let (header, data) = print::to_string_rows_from_epochs(&settings.epochs, &settings.timezones);
         print(&header, &data, &settings.print_mode);
@@ -42,6 +48,7 @@ mod tests {
             time_mode: TimeMode::Seconds,
             print_mode: PrintMode::Markdown,
             help: false,
+            version: false,
         };
         run(&settings);
     }
@@ -70,6 +77,7 @@ mod tests {
             time_mode: TimeMode::Seconds,
             print_mode: PrintMode::Markdown,
             help: false,
+            version: false,
         };
         run(&settings);
     }
@@ -99,6 +107,7 @@ mod tests {
             time_mode: TimeMode::Seconds,
             print_mode: PrintMode::PlainText,
             help: false,
+            version: false,
         };
         run(&settings);
     }
@@ -112,6 +121,7 @@ mod tests {
             time_mode: TimeMode::Seconds,
             print_mode: PrintMode::Markdown,
             help: true,
+            version: false,
         };
         run(&settings);
     }

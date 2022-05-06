@@ -13,6 +13,7 @@ enum ParseArgResult {
     TimeMode(TimeMode),
     PrintMode(PrintMode),
     Help(bool),
+    Version(bool),
 }
 
 pub fn get_parse_settings() -> date::ParseSettings {
@@ -66,6 +67,7 @@ pub fn parse_arguments(args: &[String], parse_settings: &date::ParseSettings) ->
     let mut time_mode = TimeMode::Seconds;
     let mut print_mode = PrintMode::Markdown;
     let mut help = false;
+    let mut version = false;
 
     for arg in args.iter().skip(1) {
         match parse_arg_value(arg, parse_settings) {
@@ -75,21 +77,12 @@ pub fn parse_arguments(args: &[String], parse_settings: &date::ParseSettings) ->
                 epochs.push(epoch_info);
             }
             ParseArgResult::Tzname(tzname) => all_timezones.push(Zone::Tzname(tzname)),
-            ParseArgResult::Epochs(epoch) => {
-                let offset_sec = date::get_utc_offset_sec();
-                for epoch_sec in epoch {
-                    let datestr = arg.to_string();
-                    epochs.push(date::EpochInfo {
-                        epoch_sec,
-                        offset_sec,
-                        datestr,
-                    });
-                }
-            }
+            ParseArgResult::Epochs(epoch) => epochs.extend(make_epoch_infos(epoch, arg)),
             ParseArgResult::DateInfo(date_info) => dates.push(date_info),
             ParseArgResult::TimeMode(new_time_mode) => time_mode = new_time_mode,
             ParseArgResult::PrintMode(new_print_mode) => print_mode = new_print_mode,
             ParseArgResult::Help(new_help) => help = new_help,
+            ParseArgResult::Version(new_version) => version = new_version,
             ParseArgResult::Error(error) => errors.push(error),
         }
     }
@@ -114,7 +107,21 @@ pub fn parse_arguments(args: &[String], parse_settings: &date::ParseSettings) ->
         time_mode,
         print_mode,
         help,
+        version,
     })
+}
+
+fn make_epoch_infos(epochs: Vec<i64>, datestr: &str) -> Vec<date::EpochInfo> {
+    let mut result: Vec<date::EpochInfo> = Vec::new();
+    let offset_sec = date::get_utc_offset_sec();
+    for epoch_sec in epochs {
+        result.push(date::EpochInfo {
+            epoch_sec,
+            offset_sec,
+            datestr: datestr.to_string(),
+        });
+    }
+    result
 }
 
 fn parse_arg_value(arg: &str, parse_settings: &date::ParseSettings) -> ParseArgResult {
@@ -127,7 +134,8 @@ fn parse_arg_value(arg: &str, parse_settings: &date::ParseSettings) -> ParseArgR
     match arg {
         "-m" => return ParseArgResult::TimeMode(TimeMode::Milliseconds),
         "-p" => return ParseArgResult::PrintMode(PrintMode::PlainText),
-        "-h" => return ParseArgResult::Help(true),
+        "-h" | "--help" => return ParseArgResult::Help(true),
+        "--version" => return ParseArgResult::Version(true),
         _ => {}
     }
 
@@ -192,6 +200,7 @@ fn make_default_settings() -> Settings {
         time_mode: TimeMode::Seconds,
         print_mode: PrintMode::Markdown,
         help: false,
+        version: false,
     }
 }
 

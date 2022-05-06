@@ -1,8 +1,16 @@
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub fn version() -> String {
+  format!("epo {}", VERSION)
+}
+
 pub fn usage(epoch: i64) -> String {
+  let version = version();
   let epoch1 = epoch + 86400;
   let epoch2 = epoch + 86400 * 2;
   format!(
-    "Usage: epo [options...]
+    "{version}
+Usage: epo [options...]
   -p Print as plain text.
   -h Display help.
 

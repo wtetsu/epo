@@ -7,6 +7,7 @@ pub struct Settings {
     pub time_mode: TimeMode,
     pub print_mode: PrintMode,
     pub help: bool,
+    pub version: bool,
 }
 
 pub enum Zone {
