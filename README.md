@@ -7,7 +7,7 @@
 Handy epoch converter.
 
 ```
-$ epo 1647165000 1647165000+300 1647165000+300*2 1647165000+300*3 los_angeles phoenix gmt
+$ epo 1647165000 1647165000+300 "1647165000+300*2" "1647165000+300*3" los_angeles phoenix gmt
 
 |      Epoch |      America/Los_Angeles |          America/Phoenix |                      GMT |
 | ---------- | ------------------------ | ------------------------ | ------------------------ |
@@ -52,7 +52,7 @@ cargo install dont
 ## Epoch -> Date
 
 ```
-$ epo 1648771200 1648771200+86400 1648771200+86400*2 los_angeles greenwich tokyo
+$ epo 1648771200 1648771200+86400 "1648771200+86400*2" los_angeles greenwich tokyo
 
 |      Epoch |      America/Los_Angeles |                Greenwich |               Asia/Tokyo |
 | ---------- | ------------------------ | ------------------------ | ------------------------ |
