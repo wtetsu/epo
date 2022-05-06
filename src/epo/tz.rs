@@ -64,7 +64,7 @@ pub fn search(search_name: &str) -> Vec<String> {
         }
     }
 
-    match search_by_location(search_name) {
+    match search_by_location(lower_search_name) {
         SearchResult::ExactMatch(name) => {
             return vec![name];
         }
