@@ -136,6 +136,33 @@ $ epo 2022-04-01T00:00:00 2022-04-02T00:00:00 2022-04-03T00:00:00 los_angeles gr
 | 2022-04-03T00:00:00 |          1648969200 | 1648944000 | 1648911600 |
 ```
 
+## Advanced
+
+You can also write JavaScript code (`range` returns an array).
+
+```
+epo "range(10).map(i=>1647165300+i*60)" los_angeles phoenix
+```
+
+The output is a Markdown table, so it can be pasted as is.
+
+|      Epoch |      America/Los_Angeles |          America/Phoenix |
+| ---------- | ------------------------ | ------------------------ |
+| 1647165300 | 2022-03-13T01:55:00-0800 | 2022-03-13T02:55:00-0700 |
+| 1647165360 | 2022-03-13T01:56:00-0800 | 2022-03-13T02:56:00-0700 |
+| 1647165420 | 2022-03-13T01:57:00-0800 | 2022-03-13T02:57:00-0700 |
+| 1647165480 | 2022-03-13T01:58:00-0800 | 2022-03-13T02:58:00-0700 |
+| 1647165540 | 2022-03-13T01:59:00-0800 | 2022-03-13T02:59:00-0700 |
+| 1647165600 | 2022-03-13T03:00:00-0700 | 2022-03-13T03:00:00-0700 |
+| 1647165660 | 2022-03-13T03:01:00-0700 | 2022-03-13T03:01:00-0700 |
+| 1647165720 | 2022-03-13T03:02:00-0700 | 2022-03-13T03:02:00-0700 |
+| 1647165780 | 2022-03-13T03:03:00-0700 | 2022-03-13T03:03:00-0700 |
+| 1647165840 | 2022-03-13T03:04:00-0700 | 2022-03-13T03:04:00-0700 |
+
+
+Above you can see when America/Los_Angeles enters daylight savings time. You will see that -0800 becomes -0700 and suddenly it is 03:00. By the way, America/Phoenix is known as a region in the U.S. where daylight saving time is not adopted, and it remains at -0700 all the time.
+
+
 ## License
 
 epo is published under the MIT license.
