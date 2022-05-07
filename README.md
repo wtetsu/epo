@@ -44,7 +44,7 @@ https://github.com/wtetsu/epo/releases
 ## From source code
 
 ```
-cargo install dont
+cargo install epo
 ```
 
 # Examples
