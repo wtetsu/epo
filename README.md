@@ -6,7 +6,7 @@
 
 Handy epoch converter.
 
-```
+```bash
 $ epo 1647165000 1647165000+300 "1647165000+300*2" "1647165000+300*3" los_angeles phoenix gmt
 
 |      Epoch |      America/Los_Angeles |          America/Phoenix |                      GMT |
