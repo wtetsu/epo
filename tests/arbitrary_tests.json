@@ -1,6 +1,7 @@
 {
   "timezoneExclusions": [
     "Africa/Monrovia",
+    "Asia/Hebron",
     "Factory",
     "localtime",
     "SystemV/AST4",
