@@ -160,7 +160,7 @@ The output is a Markdown table, so it can be pasted as is.
 | 1647165840 | 2022-03-13T03:04:00-0700 | 2022-03-13T03:04:00-0700 |
 
 
-In the above chart, you can see the moment when Los Angeles enters daylight saving time: 0800 becomes -0700, and suddenly it is 03:00. Incidentally, Phoenix is known as the area in the U.S. where daylight saving time is not adopted, and it remains at -0700 all the time.
+In the above table, you can see the moment when Los Angeles enters daylight saving time: 0800 becomes -0700, and suddenly it is 03:00. Incidentally, Phoenix is known as the area in the U.S. where daylight saving time is not adopted, and it remains at -0700 all the time.
 
 
 ## License
