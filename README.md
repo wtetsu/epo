@@ -51,7 +51,7 @@ cargo install epo
 
 ## Epoch -> Date
 
-```
+```bash
 $ epo 1648771200 1648771200+86400 "1648771200+86400*2" los_angeles greenwich tokyo
 
 |      Epoch |      America/Los_Angeles |                Greenwich |               Asia/Tokyo |
@@ -144,7 +144,7 @@ You can also write JavaScript code (`range` returns an array).
 epo "range(10).map(i=>1647165300+i*60)" los_angeles phoenix
 ```
 
-The output is a Markdown table, so it can be pasted as is.
+epo prints a Markdown formatted table, so it can be pasted as is.
 
 |      Epoch |      America/Los_Angeles |          America/Phoenix |
 | ---------- | ------------------------ | ------------------------ |
