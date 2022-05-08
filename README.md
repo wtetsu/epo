@@ -18,7 +18,7 @@ $ epo 1647165000 1647165000+300 "1647165000+300*2" "1647165000+300*3" los_angele
 ```
 
 <details>
-<summary>Output is Markdown format</summary>
+<summary>It prints a Markdown formatted table.</summary>
 
 |      Epoch |      America/Los_Angeles |          America/Phoenix |                      GMT |
 | ---------- | ------------------------ | ------------------------ | ------------------------ |
