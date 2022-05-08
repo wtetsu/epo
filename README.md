@@ -140,7 +140,7 @@ $ epo 2022-04-01T00:00:00 2022-04-02T00:00:00 2022-04-03T00:00:00 los_angeles gr
 
 You can also write JavaScript code (`range` returns an array).
 
-```
+```javascript
 epo "range(10).map(i=>1647165300+i*60)" los_angeles phoenix
 ```
 
