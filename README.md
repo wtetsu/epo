@@ -1,10 +1,11 @@
-[![Test](https://github.com/wtetsu/epo/actions/workflows/test.yml/badge.svg)](https://github.com/wtetsu/epo/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/wtetsu/epo/branch/master/graph/badge.svg?token=26lMbyfI60)](https://codecov.io/gh/wtetsu/epo)
-
-
 <p align="center">
   <img width="300" src="https://user-images.githubusercontent.com/515948/179443240-5519696b-f2a6-4940-9745-9fef825492ea.png" alt="epo logo" />
 </p>
 
+<p align="center">
+  <a href="https://github.com/wtetsu/epo/actions/workflows/test.yml"><img src="https://github.com/wtetsu/epo/actions/workflows/test.yml/badge.svg" alt="Test" /></a>
+  <a href="https://codecov.io/gh/wtetsu/epo"><img src="https://codecov.io/gh/wtetsu/epo/branch/master/graph/badge.svg?token=26lMbyfI60" alt="codecov" /></a>
+</p>
 
 # epo
 
