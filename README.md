@@ -1,8 +1,12 @@
 [![Test](https://github.com/wtetsu/epo/actions/workflows/test.yml/badge.svg)](https://github.com/wtetsu/epo/actions/workflows/test.yml) [![codecov](https://codecov.io/gh/wtetsu/epo/branch/master/graph/badge.svg?token=26lMbyfI60)](https://codecov.io/gh/wtetsu/epo)
 
-# epo
 
-<img src="https://user-images.githubusercontent.com/515948/167030635-ca71725a-ae34-4a64-aabe-239d962a88fd.png" width="128" />
+<p align="center">
+  <img width="300" src="https://user-images.githubusercontent.com/515948/179443240-5519696b-f2a6-4940-9745-9fef825492ea.png" alt="epo logo" />
+</p>
+
+
+# epo
 
 Handy epoch converter.
 
@@ -170,10 +174,6 @@ epo is published under the MIT license.
 ## Third-party data
 
 This project includes some third-party data:
-
-### Images
-
-- [Alarm, bell, clock icon](https://www.iconfinder.com/icons/3507765/alarm_bell_clock_iconoteka_ring_time_timer_icon) ([CC BY 3.0](https://creativecommons.org/licenses/by/3.0/))
 
 ### Great Rust libraries
 
