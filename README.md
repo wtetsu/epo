@@ -33,7 +33,7 @@ $ epo 1647165000 1647165000+300 "1647165000+300*2" los_angeles phoenix gmt
 
 # Installation
 
-## Brew (Only for OSX)
+## Brew (for macOS)
 
 ```
 brew tap wtetsu/epo
