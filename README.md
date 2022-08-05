@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" src="https://user-images.githubusercontent.com/515948/179443240-5519696b-f2a6-4940-9745-9fef825492ea.png" alt="epo logo" />
+  <img width="300" src="https://user-images.githubusercontent.com/515948/183086971-d2b3f456-3c9e-4c83-8db0-cf28020cb591.png" alt="epo logo" />
 </p>
 
 <p align="center">
