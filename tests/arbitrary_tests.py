@@ -34,7 +34,7 @@ def main(epo_path: str, repeat: int, timezone_exclusions: set[str]):
 
 def make_test_runner(epo_path: str, available_timezones: list[str], max_epoch: int) -> Callable[[int, int], bool]:
     def test_runner(epoch_num: int, timezone_num: int):
-        epochs = [random.randint(0, max_epoch) for _ in range(epoch_num)]
+        epochs = [random.randint(315532800, max_epoch) for _ in range(epoch_num)]
         timezones = random.sample(available_timezones, timezone_num)
         return run_and_compare(epo_path, epochs, timezones)
     return test_runner

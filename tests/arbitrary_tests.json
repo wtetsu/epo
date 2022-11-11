@@ -1,9 +1,13 @@
 {
   "timezoneExclusions": [
+    "America/Chihuahua",
+    "America/Ojinaga",
     "Africa/Monrovia",
     "Antarctica/Davis",
     "Asia/Hebron",
     "Chile/EasterIsland",
+    "Europe/Kyiv",
+    "Europe/Uzhgorod",
     "Factory",
     "localtime",
     "SystemV/AST4",
