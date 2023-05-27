@@ -8,9 +8,9 @@ homepage = "https://github.com/wtetsu/epo"
 license = "MIT"
 
 [dependencies]
-chrono = "0.4.23"
-chrono-tz = "0.8.1"
-once_cell = "1.17.0"
+chrono = "0.4.24"
+chrono-tz = "0.8.2"
+once_cell = "1.17.1"
 Boa = "0.13.1"
 boa_engine = "0.16.0"
 
