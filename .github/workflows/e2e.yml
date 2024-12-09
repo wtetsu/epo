@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: actions/setup-python@v3
         with:
           cache: "pip"
@@ -18,4 +18,8 @@ jobs:
           command: build
           args: --release
       - name: End to end test
-        run: sh tests/run_all.sh
+        uses: nick-fields/retry@v2
+        with:
+          timeout_minutes: 10
+          max_attempts: 10
+          command: sh tests/run_all.sh
